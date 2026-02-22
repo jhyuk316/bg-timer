@@ -451,7 +451,18 @@ function init() {
   } catch (e) { /* unsupported */ }
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    let refreshing = false;
+
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+      .catch(() => {});
+
+    // SW가 교체되면 한 번만 새로고침
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        location.reload();
+      }
+    });
   }
 }
 
