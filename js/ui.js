@@ -238,7 +238,7 @@ export function renderGameScreen(container, gameState, settings) {
   const refSection = el('div', 'referee-section');
   const refIconGame = el('span', 'referee-icon');
   refIconGame.innerHTML = REFEREE_SVG;
-  refSection.append(refIconGame, el('span', 'referee-label', '심판'));
+  refSection.append(refIconGame, el('span', 'referee-label', '운영'));
   const refTime = el('span', 'referee-time', '0:00');
   refTime.id = 'referee-time';
   refSection.appendChild(refTime);
@@ -604,7 +604,7 @@ function buildUnifiedStats(stats) {
   const refIcon = el('span', 'stats-meeple');
   refIcon.innerHTML = REFEREE_SVG;
   refLabel.appendChild(refIcon);
-  refLabel.appendChild(el('span', 'stats-unified-name', '심판'));
+  refLabel.appendChild(el('span', 'stats-unified-name', '운영'));
   refInfoRow.appendChild(refLabel);
 
   const refPct = Math.round(stats.referee.totalTime / totalMs * 100);

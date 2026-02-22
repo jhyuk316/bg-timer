@@ -471,8 +471,8 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 
 .game-meeple {
-  width: clamp(24px, 6vw, 48px);
-  height: clamp(24px, 6vw, 48px);
+  width: clamp(60px, 16vw, 100px);
+  height: clamp(60px, 16vw, 100px);
   color: var(--player-color);
   opacity: 0.6;
   transition: opacity 0.2s, transform 0.2s;
