@@ -27,6 +27,7 @@ export function createGame(settings) {
     lastTickTime: null,
     intervalId: null,
     config: { turnTime: turnTime * 1000, reserveTime: reserveTime * 1000, penaltyTime: penaltyTime * 1000, carryOverTurnTime },
+    turnLog: [],
     _tickCallbacks: [],
     _eventCallbacks: [],
     _fiveMinWarned: new Set(),
@@ -37,6 +38,18 @@ export function createGame(settings) {
 
   function emit(event, data) {
     for (const cb of game._eventCallbacks) cb(event, data);
+  }
+
+  function openTurn(type, player) {
+    const now = Date.now() - game.gameStartTime;
+    game.turnLog.push({ type, player, startMs: now, endMs: null });
+  }
+
+  function closeTurn() {
+    const last = game.turnLog[game.turnLog.length - 1];
+    if (last && last.endMs === null) {
+      last.endMs = Date.now() - game.gameStartTime;
+    }
   }
 
   function tick() {
@@ -110,26 +123,33 @@ export function createGame(settings) {
       game.activePlayer = index;
       game.state = State.PLAYER;
       game.playerStates[index].turnCount++;
+      openTurn('player', index);
       startTicking();
       emit('playerStart', { player: index });
     } else if (game.state === State.PLAYER && game.activePlayer === index) {
       // Same player tap → stop player, start referee
+      closeTurn();
       game.state = State.REFEREE;
       game.activePlayer = -1;
       game.referee.currentLapTime = 0;
       game.referee.turnCount++;
+      openTurn('referee', -1);
       emit('refereeStart', {});
     } else if (game.state === State.PLAYER && game.activePlayer !== index) {
       // Different player tap → direct switch
+      closeTurn();
       const prev = game.activePlayer;
       endPlayerTurn(prev);
       game.activePlayer = index;
       game.playerStates[index].turnCount++;
+      openTurn('player', index);
       emit('playerSwitch', { from: prev, to: index });
     } else if (game.state === State.REFEREE) {
+      closeTurn();
       game.state = State.PLAYER;
       game.activePlayer = index;
       game.playerStates[index].turnCount++;
+      openTurn('player', index);
       game.referee.currentLapTime = 0;
       emit('playerStart', { player: index });
     }
@@ -148,6 +168,7 @@ export function createGame(settings) {
     if (game.state === State.IDLE) return;
     // do a final tick to capture time up to this moment
     tick();
+    closeTurn();
     stopTicking();
     const prevState = game.state;
     const prevPlayer = game.activePlayer;
@@ -159,6 +180,7 @@ export function createGame(settings) {
     if (game.state !== State.IDLE || !game.gameStartTime) return;
     game.state = prevState;
     game.activePlayer = prevPlayer;
+    openTurn(prevState, prevPlayer);
     startTicking();
     emit('resume', {});
   };
@@ -169,6 +191,7 @@ export function createGame(settings) {
     game.activePlayer = -1;
     game.gameStartTime = null;
     game.gameEndTime = null;
+    game.turnLog = [];
     game._fiveMinWarned.clear();
     game.referee = { currentLapTime: 0, totalTime: 0, turnCount: 0 };
     for (const p of game.playerStates) {
@@ -186,6 +209,7 @@ export function createGame(settings) {
     if (game.state !== State.IDLE && game.intervalId) {
       tick();
     }
+    closeTurn();
     stopTicking();
     game.gameEndTime = Date.now();
     game.state = State.IDLE;
@@ -193,6 +217,7 @@ export function createGame(settings) {
     const totalPlayTime = game.gameEndTime - (game.gameStartTime || game.gameEndTime);
     const stats = {
       totalPlayTime,
+      turnLog: game.turnLog.map(e => ({ ...e })),
       players: game.playerStates.map((p, i) => ({
         name: p.name,
         color: p.color,

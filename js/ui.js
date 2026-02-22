@@ -361,6 +361,10 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   refCard.appendChild(refGrid);
   wrap.appendChild(refCard);
 
+  // Gantt chart
+  const gantt = buildGanttChart(stats);
+  if (gantt) wrap.appendChild(gantt);
+
   // Game name input
   const saveSection = el('div', 'stats-save');
   const nameLabel = el('label', 'stats-name-label', '게임명');
@@ -490,7 +494,85 @@ export function renderHistoryDetail(container, game, callbacks) {
   refCard.appendChild(refGrid);
   wrap.appendChild(refCard);
 
+  // Gantt chart
+  const gantt2 = buildGanttChart(game.stats);
+  if (gantt2) wrap.appendChild(gantt2);
+
   container.appendChild(wrap);
+}
+
+// --- Gantt Chart ---
+
+function buildGanttChart(stats) {
+  const turnLog = stats.turnLog;
+  if (!turnLog || turnLog.length === 0) return null;
+
+  const totalMs = stats.totalPlayTime;
+  if (totalMs <= 0) return null;
+
+  const chart = el('div', 'gantt-chart');
+  chart.appendChild(el('div', 'gantt-title', '턴 타임라인'));
+
+  // Time ticks
+  const ticks = el('div', 'gantt-ticks');
+  const intervalMin = totalMs <= 5 * 60000 ? 1 : totalMs <= 20 * 60000 ? 5 : 10;
+  const intervalMs = intervalMin * 60000;
+  for (let t = 0; t <= totalMs; t += intervalMs) {
+    const tick = el('div', 'gantt-tick');
+    tick.style.left = `${(t / totalMs) * 100}%`;
+    const mins = Math.round(t / 60000);
+    tick.textContent = mins === 0 ? '0' : `${mins}m`;
+    ticks.appendChild(tick);
+  }
+  chart.appendChild(ticks);
+
+  // Player rows
+  for (let i = 0; i < stats.players.length; i++) {
+    const p = stats.players[i];
+    const row = el('div', 'gantt-row');
+
+    const label = el('div', 'gantt-label');
+    const meeple = el('span', 'stats-meeple');
+    meeple.innerHTML = MEEPLE_SVG;
+    meeple.style.color = p.color;
+    label.appendChild(meeple);
+    label.appendChild(document.createTextNode(p.name));
+    row.appendChild(label);
+
+    const timeline = el('div', 'gantt-timeline');
+    for (const entry of turnLog) {
+      if (entry.type === 'player' && entry.player === i && entry.endMs != null) {
+        const bar = el('div', 'gantt-bar');
+        bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
+        bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
+        bar.style.backgroundColor = p.color;
+        timeline.appendChild(bar);
+      }
+    }
+    row.appendChild(timeline);
+    chart.appendChild(row);
+  }
+
+  // Referee row
+  const refRow = el('div', 'gantt-row');
+  const refLabel = el('div', 'gantt-label');
+  refLabel.textContent = '⚖ 심판';
+  refRow.appendChild(refLabel);
+
+  const refTimeline = el('div', 'gantt-timeline');
+  for (const entry of turnLog) {
+    if (entry.type === 'referee' && entry.endMs != null) {
+      const bar = el('div', 'gantt-bar');
+      bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
+      bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
+      bar.style.backgroundColor = '#888';
+      refTimeline.appendChild(bar);
+    }
+  }
+  refRow.appendChild(refTimeline);
+  chart.appendChild(refRow);
+
+  return chart;
 }
 
 // --- Helpers ---
