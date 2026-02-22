@@ -2,7 +2,7 @@ import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnWarning, playReserveWarning, playPenaltyAlert, speakTTS } from './sound.js';
 import { saveGame as saveHistory, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
-import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen } from './ui.js';
+import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -20,6 +20,11 @@ function showScreen(name) {
     case 'stats': showStats(); break;
     case 'history': showHistory(); break;
   }
+}
+
+function restoreGlobalBar() {
+  renderGlobalBar({ toggleSound, toggleFullscreen });
+  updateGlobalBar(settings.soundEnabled);
 }
 
 // --- Settings ---
@@ -79,12 +84,6 @@ function showSettings() {
       settings.presetName = '';
       saveSettings(settings);
     },
-    toggleSound() {
-      settings.soundEnabled = !settings.soundEnabled;
-      setSoundEnabled(settings.soundEnabled);
-      saveSettings(settings);
-      showSettings();
-    },
     openHistory() {
       showScreen('history');
     },
@@ -92,6 +91,7 @@ function showSettings() {
       startNewGame();
     },
   });
+  restoreGlobalBar();
 }
 
 // --- Game ---
@@ -182,6 +182,7 @@ function showGame() {
   renderGameScreen(appEl, state, renderSettings);
   updateGameUI(state);
   wireGameControls();
+  restoreGlobalBar();
 }
 
 function wireGameControls() {
@@ -260,6 +261,7 @@ function showStats() {
       showScreen('settings');
     },
   });
+  restoreGlobalBar();
 }
 
 // --- History ---
@@ -279,6 +281,7 @@ function showHistory() {
       showHistory();
     },
   });
+  restoreGlobalBar();
 }
 
 function showHistoryDetail(game) {
@@ -287,6 +290,24 @@ function showHistoryDetail(game) {
       showHistory();
     },
   });
+  restoreGlobalBar();
+}
+
+// --- Global Actions ---
+
+function toggleSound() {
+  settings.soundEnabled = !settings.soundEnabled;
+  setSoundEnabled(settings.soundEnabled);
+  saveSettings(settings);
+  updateGlobalBar(settings.soundEnabled);
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
 }
 
 // --- Init ---
@@ -294,6 +315,11 @@ function showHistoryDetail(game) {
 function init() {
   initSound();
   setSoundEnabled(settings.soundEnabled);
+
+  document.addEventListener('fullscreenchange', () => {
+    updateGlobalBar(settings.soundEnabled);
+  });
+
   showScreen('settings');
 
   // Force landscape orientation
