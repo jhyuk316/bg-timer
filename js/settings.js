@@ -15,19 +15,23 @@ export const DEFAULT_COLORS = ['#B84040', '#3D6A9E', '#C49645', '#4A9E6E', '#706
 
 export const COLOR_PRESETS = {
   "Ian O'Toole": {
-    colors: ['#7CAFC4', '#D4A24E', '#C4727A', '#4E9E8E', '#8E7BB5', '#D47F52', '#8BAF6E', '#A89088'],
-    maxPlayers: 8,
+    colors: ['#C4727A', '#D4A24E', '#8BAF6E', '#7CAFC4', '#8E7BB5'],
+    paletteMap: [0, 2, 3, 5, 7],
+    maxPlayers: 5,
   },
   'SETI': {
     colors: ['#E8E4DF', '#4CAF7A', '#E08840', '#7B5EA7'],
+    paletteMap: [9, 3, 1, 7],
     maxPlayers: 4,
   },
-  '백로성': {
+  '\uBC31\uB85C\uC131': {
     colors: ['#C94040', '#4477B0', '#D4B84E', '#5A9E64'],
+    paletteMap: [0, 6, 2, 3],
     maxPlayers: 4,
   },
   'Endeavor Deep Sea': {
     colors: ['#E8E4DF', '#50C4A8', '#E0C850', '#7B5EA7', '#C94040'],
+    paletteMap: [9, 4, 2, 7, 0],
     maxPlayers: 5,
   },
 };
@@ -44,10 +48,11 @@ const SETTINGS_KEY = 'bg-timer-settings';
 
 export function getDefaultSettings() {
   return {
+    activeMeeples: [true, false, false, false, false, false, true, false, false, false],
     playerCount: 2,
-    players: Array.from({ length: 5 }, (_, i) => ({
+    players: Array.from({ length: 10 }, (_, i) => ({
       name: `Player ${i + 1}`,
-      color: DEFAULT_COLORS[i],
+      color: COLOR_PALETTE[i].hex,
     })),
     presetName: 'Middle',
     turnTime: 45,
@@ -64,7 +69,39 @@ export function loadSettings() {
     if (!raw) return getDefaultSettings();
     const saved = JSON.parse(raw);
     const defaults = getDefaultSettings();
-    return { ...defaults, ...saved };
+    const merged = { ...defaults, ...saved };
+
+    // Migration: ensure players array has 10 entries
+    if (merged.players.length < 10) {
+      while (merged.players.length < 10) {
+        const i = merged.players.length;
+        merged.players.push({ name: `Player ${i + 1}`, color: COLOR_PALETTE[i].hex });
+      }
+    }
+
+    // Migration: generate activeMeeples from old playerCount + colors
+    if (!saved.activeMeeples) {
+      const active = new Array(10).fill(false);
+      const oldCount = saved.playerCount || 2;
+      const oldPlayers = saved.players || defaults.players;
+      for (let i = 0; i < oldCount && i < oldPlayers.length; i++) {
+        const hex = oldPlayers[i].color;
+        const idx = COLOR_PALETTE.findIndex(c => c.hex === hex);
+        if (idx >= 0) {
+          active[idx] = true;
+          // Copy name to the palette slot
+          merged.players[idx] = { name: oldPlayers[i].name, color: COLOR_PALETTE[idx].hex };
+        } else {
+          // Color not in palette, activate by index
+          active[i] = true;
+          merged.players[i] = { name: oldPlayers[i].name, color: COLOR_PALETTE[i].hex };
+        }
+      }
+      merged.activeMeeples = active;
+      merged.playerCount = active.filter(Boolean).length;
+    }
+
+    return merged;
   } catch {
     return getDefaultSettings();
   }

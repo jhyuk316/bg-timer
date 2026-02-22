@@ -1,4 +1,4 @@
-import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, DEFAULT_COLORS } from './settings.js';
+import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnWarning, playReserveWarning, playPenaltyAlert, speakTTS } from './sound.js';
 import { saveGame as saveHistory, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
@@ -9,6 +9,7 @@ let settings = loadSettings();
 let game = null;
 let pausedState = null; // { prevState, prevPlayer }
 let currentScreen = 'settings';
+let settingsPage = 1;
 let lastStats = null;
 
 function showScreen(name) {
@@ -24,28 +25,43 @@ function showScreen(name) {
 // --- Settings ---
 
 function showSettings() {
-  renderSettingsScreen(appEl, settings, {
-    setPlayerCount(n) {
-      settings.playerCount = n;
+  renderSettingsScreen(appEl, settings, settingsPage, {
+    toggleMeeple(index) {
+      if (settings.activeMeeples[index]) {
+        settings.activeMeeples[index] = false;
+      } else {
+        const activeCount = settings.activeMeeples.filter(Boolean).length;
+        if (activeCount >= 5) return 'max';
+        settings.activeMeeples[index] = true;
+      }
+      settings.playerCount = settings.activeMeeples.filter(Boolean).length;
       saveSettings(settings);
       showSettings();
     },
-    setPlayerName(i, name) {
-      settings.players[i].name = name || `Player ${i + 1}`;
+    setPlayerName(paletteIndex, name) {
+      settings.players[paletteIndex].name = name || `Player ${paletteIndex + 1}`;
       saveSettings(settings);
-    },
-    setPlayerColor(i, hex) {
-      settings.players[i].color = hex;
-      saveSettings(settings);
-      showSettings();
     },
     applyColorPreset(name) {
       const preset = COLOR_PRESETS[name];
       if (!preset) return;
-      for (let i = 0; i < settings.playerCount && i < preset.colors.length; i++) {
-        settings.players[i].color = preset.colors[i];
+      // Deactivate all, then activate only paletteMap indices
+      settings.activeMeeples = new Array(10).fill(false);
+      for (const idx of preset.paletteMap) {
+        settings.activeMeeples[idx] = true;
       }
+      settings.playerCount = settings.activeMeeples.filter(Boolean).length;
       saveSettings(settings);
+      showSettings();
+    },
+    goToPage2() {
+      const activeCount = settings.activeMeeples.filter(Boolean).length;
+      if (activeCount === 0) return 'empty';
+      settingsPage = 2;
+      showSettings();
+    },
+    goToPage1() {
+      settingsPage = 1;
       showSettings();
     },
     setPreset(name) {
@@ -86,7 +102,27 @@ function showSettings() {
 // --- Game ---
 
 function startNewGame() {
-  game = createGame(settings);
+  // Build game settings from activeMeeples
+  const activePlayers = [];
+  for (let i = 0; i < 10; i++) {
+    if (settings.activeMeeples[i]) {
+      activePlayers.push({
+        name: settings.players[i].name,
+        color: COLOR_PALETTE[i].hex,
+      });
+    }
+  }
+
+  const gameSettings = {
+    playerCount: activePlayers.length,
+    players: activePlayers,
+    turnTime: settings.turnTime,
+    reserveTime: settings.reserveTime,
+    penaltyTime: settings.penaltyTime,
+    carryOverTurnTime: settings.carryOverTurnTime,
+  };
+
+  game = createGame(gameSettings);
   pausedState = null;
   lastStats = null;
 
@@ -100,7 +136,7 @@ function startNewGame() {
         playTurnWarning();
         break;
       case 'reserveFiveMin':
-        speakTTS('5분 남았습니다');
+        speakTTS('5\uBD84 \uB0A8\uC558\uC2B5\uB2C8\uB2E4');
         break;
       case 'reserveWarning':
         playReserveWarning();
@@ -126,12 +162,30 @@ function startNewGame() {
     }
   });
 
+  // Reset settings page for next time
+  settingsPage = 1;
   showScreen('game');
 }
 
 function showGame() {
+  // Build active players for rendering
+  const activePlayers = [];
+  for (let i = 0; i < 10; i++) {
+    if (settings.activeMeeples[i]) {
+      activePlayers.push({
+        name: settings.players[i].name,
+        color: COLOR_PALETTE[i].hex,
+      });
+    }
+  }
+
+  const renderSettings = {
+    playerCount: activePlayers.length,
+    players: activePlayers,
+  };
+
   const state = game.getState();
-  renderGameScreen(appEl, state, settings);
+  renderGameScreen(appEl, state, renderSettings);
   updateGameUI(state);
   wireGameControls();
 }
@@ -161,7 +215,7 @@ function wireGameControls() {
 
   // Reset
   document.getElementById('btn-reset').addEventListener('click', () => {
-    if (confirm('게임을 리셋할까요?')) {
+    if (confirm('\uAC8C\uC784\uC744 \uB9AC\uC14B\uD560\uAE4C\uC694?')) {
       game.reset();
       updateGameUI(game.getState());
     }
@@ -169,7 +223,7 @@ function wireGameControls() {
 
   // End
   document.getElementById('btn-end').addEventListener('click', () => {
-    if (confirm('게임을 종료할까요?')) {
+    if (confirm('\uAC8C\uC784\uC744 \uC885\uB8CC\uD560\uAE4C\uC694?')) {
       lastStats = game.end();
       showScreen('stats');
     }
@@ -179,7 +233,7 @@ function wireGameControls() {
 function updatePauseUI(isPaused) {
   const btn = document.getElementById('btn-pause');
   if (btn) {
-    btn.textContent = isPaused ? '▶ 재개' : '⏸ 일시정지';
+    btn.textContent = isPaused ? '\u25B6 \uC7AC\uAC1C' : '\u23F8 \uC77C\uC2DC\uC815\uC9C0';
   }
   const grid = document.getElementById('player-grid');
   if (grid) {
@@ -205,7 +259,7 @@ function showStats() {
         },
         stats: lastStats,
       });
-      alert('저장되었습니다!');
+      alert('\uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4!');
       showScreen('settings');
     },
     newGame() {

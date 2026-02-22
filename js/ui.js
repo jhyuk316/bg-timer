@@ -1,4 +1,4 @@
-import { COLOR_PALETTE, DEFAULT_COLORS, COLOR_PRESETS, TIMER_PRESETS } from './settings.js';
+import { COLOR_PALETTE, COLOR_PRESETS, TIMER_PRESETS } from './settings.js';
 
 const MEEPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 54.99c-27 0-46.418 14.287-57.633 32.23-10.03 16.047-14.203 34.66-15.017 50.962-30.608 15.135-64.515 30.394-91.815 45.994-14.32 8.183-26.805 16.414-36.203 25.26C45.934 218.28 39 228.24 39 239.99c0 5 2.44 9.075 5.19 12.065 2.754 2.99 6.054 5.312 9.812 7.48 7.515 4.336 16.99 7.95 27.412 11.076 15.483 4.646 32.823 8.1 47.9 9.577-14.996 25.84-34.953 49.574-52.447 72.315C56.65 378.785 39 403.99 39 431.99c0 4-.044 7.123.31 10.26.355 3.137 1.256 7.053 4.41 10.156 3.155 3.104 7.017 3.938 10.163 4.28 3.146.345 6.315.304 10.38.304h111.542c8.097 0 14.026.492 20.125-3.43 6.1-3.92 8.324-9.275 12.67-17.275l.088-.16.08-.166s9.723-19.77 21.324-39.388c5.8-9.808 12.097-19.576 17.574-26.498 2.74-3.46 5.304-6.204 7.15-7.754.564-.472.82-.56 1.184-.76.363.2.62.288 1.184.76 1.846 1.55 4.41 4.294 7.15 7.754 5.477 6.922 11.774 16.69 17.574 26.498 11.6 19.618 21.324 39.387 21.324 39.387l.08.165.088.16c4.346 8 6.55 13.323 12.61 17.254 6.058 3.93 11.974 3.45 19.957 3.45H448c4 0 7.12.043 10.244-.304 3.123-.347 6.998-1.21 10.12-4.332 3.12-3.122 3.984-6.997 4.33-10.12.348-3.122.306-6.244.306-10.244 0-28-17.65-53.205-37.867-79.488-17.493-22.74-37.45-46.474-52.447-72.315 15.077-1.478 32.417-4.93 47.9-9.576 10.422-3.125 19.897-6.74 27.412-11.075 3.758-2.168 7.058-4.49 9.81-7.48 2.753-2.99 5.192-7.065 5.192-12.065 0-11.75-6.934-21.71-16.332-30.554-9.398-8.846-21.883-17.077-36.203-25.26-27.3-15.6-61.207-30.86-91.815-45.994-.814-16.3-4.988-34.915-15.017-50.96C302.418 69.276 283 54.99 256 54.99z"/></svg>`;
 
@@ -24,80 +24,131 @@ export function formatTimeLong(ms) {
 
 // --- Settings Screen ---
 
-export function renderSettingsScreen(container, settings, callbacks) {
+export function renderSettingsScreen(container, settings, page, callbacks) {
+  if (page === 1) {
+    renderSettingsPage1(container, settings, callbacks);
+  } else {
+    renderSettingsPage2(container, settings, callbacks);
+  }
+}
+
+function renderPageIndicator(page) {
+  const indicator = el('div', 'page-indicator');
+
+  const step1 = el('div', `page-step${page === 1 ? ' active' : ''}`);
+  step1.textContent = '1. 플레이어';
+  indicator.appendChild(step1);
+
+  const dot = el('span', 'page-dot', '—');
+  indicator.appendChild(dot);
+
+  const step2 = el('div', `page-step${page === 2 ? ' active' : ''}`);
+  step2.textContent = '2. 타이머';
+  indicator.appendChild(step2);
+
+  return indicator;
+}
+
+function renderSettingsPage1(container, settings, callbacks) {
   container.innerHTML = '';
 
   const wrap = el('div', 'settings-wrap');
-
-  // Title
   wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
+  wrap.appendChild(renderPageIndicator(1));
 
-  // Two-column body
-  const body = el('div', 'settings-body');
-
-  // === Left column: players ===
-  const leftCol = el('div', 'settings-col');
-
-  // Player count
-  const countSection = el('div', 'settings-section');
-  countSection.appendChild(el('label', 'settings-label', '플레이어 수'));
-  const countRow = el('div', 'count-row');
-  for (let i = 1; i <= 5; i++) {
-    const btn = el('button', `count-btn${i === settings.playerCount ? ' active' : ''}`, String(i));
-    btn.addEventListener('click', () => callbacks.setPlayerCount(i));
-    countRow.appendChild(btn);
-  }
-  countSection.appendChild(countRow);
-  leftCol.appendChild(countSection);
-
-  // Players
-  const playersSection = el('div', 'settings-section');
-  playersSection.appendChild(el('label', 'settings-label', '플레이어 설정'));
-
+  // Color presets section
+  const presetSection = el('div', 'settings-section');
+  presetSection.appendChild(el('label', 'settings-label', '색상 프리셋'));
   const presetColorRow = el('div', 'preset-color-row');
-  const presetLabel = el('span', 'preset-color-label', '색상 프리셋:');
-  presetColorRow.appendChild(presetLabel);
-  for (const [name, preset] of Object.entries(COLOR_PRESETS)) {
+  for (const [name] of Object.entries(COLOR_PRESETS)) {
     const btn = el('button', 'preset-color-btn', name);
-    if (preset.maxPlayers < settings.playerCount) {
-      btn.disabled = true;
-      btn.title = `최대 ${preset.maxPlayers}인`;
-    }
     btn.addEventListener('click', () => callbacks.applyColorPreset(name));
     presetColorRow.appendChild(btn);
   }
-  playersSection.appendChild(presetColorRow);
+  presetSection.appendChild(presetColorRow);
+  wrap.appendChild(presetSection);
 
-  for (let i = 0; i < settings.playerCount; i++) {
-    const p = settings.players[i];
-    const card = el('div', 'player-card');
-    card.style.borderLeftColor = p.color;
+  // Meeple selection section
+  const meepleSection = el('div', 'settings-section');
+  meepleSection.appendChild(el('label', 'settings-label', '플레이어 선택'));
 
-    const meeple = el('div', 'player-meeple');
-    meeple.innerHTML = MEEPLE_SVG;
-    meeple.style.color = p.color;
-    card.appendChild(meeple);
+  const meepleGrid = el('div', 'meeple-grid');
+  for (let i = 0; i < COLOR_PALETTE.length; i++) {
+    const color = COLOR_PALETTE[i];
+    const isActive = settings.activeMeeples[i];
 
-    const nameInput = el('input', 'player-name-input');
-    nameInput.type = 'text';
-    nameInput.value = p.name;
-    nameInput.placeholder = `Player ${i + 1}`;
-    nameInput.addEventListener('change', (e) => callbacks.setPlayerName(i, e.target.value));
-    card.appendChild(nameInput);
+    const slot = el('div', `meeple-slot${isActive ? ' active' : ' dimmed'}`);
+    slot.addEventListener('click', () => {
+      const result = callbacks.toggleMeeple(i);
+      if (result === 'max') {
+        showMeepleError(container, '최대 5명까지 선택할 수 있습니다');
+      }
+    });
 
-    const colorBtn = el('button', 'color-pick-btn', '');
-    colorBtn.style.backgroundColor = p.color;
-    colorBtn.addEventListener('click', () => openColorPicker(container, i, p.color, callbacks.setPlayerColor));
-    card.appendChild(colorBtn);
+    const icon = el('div', 'meeple-icon');
+    icon.innerHTML = MEEPLE_SVG;
+    icon.style.color = color.hex;
+    slot.appendChild(icon);
 
-    playersSection.appendChild(card);
+    if (isActive) {
+      const nameInput = el('input', 'meeple-name');
+      nameInput.type = 'text';
+      nameInput.value = settings.players[i].name;
+      nameInput.placeholder = color.name;
+      nameInput.addEventListener('click', (e) => e.stopPropagation());
+      nameInput.addEventListener('change', (e) => callbacks.setPlayerName(i, e.target.value));
+      slot.appendChild(nameInput);
+    } else {
+      const label = el('span', 'meeple-label', color.name);
+      slot.appendChild(label);
+    }
+
+    meepleGrid.appendChild(slot);
   }
-  leftCol.appendChild(playersSection);
-  body.appendChild(leftCol);
+  meepleSection.appendChild(meepleGrid);
 
-  // === Right column: timer ===
-  const rightCol = el('div', 'settings-col');
+  const errorMsg = el('div', 'meeple-error');
+  errorMsg.id = 'meeple-error';
+  meepleSection.appendChild(errorMsg);
 
+  wrap.appendChild(meepleSection);
+
+  // Nav buttons
+  const nav = el('div', 'settings-nav');
+  const historyBtn = el('button', 'btn-secondary', '히스토리');
+  historyBtn.addEventListener('click', callbacks.openHistory);
+  nav.appendChild(historyBtn);
+
+  const nextBtn = el('button', 'btn-primary', '다음 →');
+  nextBtn.addEventListener('click', () => {
+    const result = callbacks.goToPage2();
+    if (result === 'empty') {
+      showMeepleError(container, '플레이어를 1명 이상 선택해주세요');
+    }
+  });
+  nav.appendChild(nextBtn);
+
+  wrap.appendChild(nav);
+  container.appendChild(wrap);
+}
+
+function showMeepleError(container, message) {
+  const errorEl = container.querySelector('#meeple-error');
+  if (errorEl) {
+    errorEl.textContent = message;
+    clearTimeout(errorEl._timeout);
+    errorEl._timeout = setTimeout(() => { errorEl.textContent = ''; }, 2000);
+  }
+}
+
+function renderSettingsPage2(container, settings, callbacks) {
+  container.innerHTML = '';
+
+  const wrap = el('div', 'settings-wrap');
+  wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
+  wrap.appendChild(renderPageIndicator(2));
+
+  // Timer section
   const timerSection = el('div', 'settings-section');
   timerSection.appendChild(el('label', 'settings-label', '타이머 프리셋'));
   const presetRow = el('div', 'preset-row');
@@ -114,68 +165,39 @@ export function renderSettingsScreen(container, settings, callbacks) {
   timerValues.appendChild(makeTimerInput('패널티 추가 (분)', Math.round(settings.penaltyTime / 60), 1, 30, (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
   timerSection.appendChild(timerValues);
 
+  // Options
+  const optSection = el('div', 'settings-section');
+  optSection.appendChild(el('label', 'settings-label', '옵션'));
+
   const carryRow = el('div', 'toggle-row');
-  const carryLabel = el('span', '', '남은 턴 시간 → 예비시간 합산');
+  carryRow.appendChild(el('span', '', '남은 턴 시간 → 예비시간 합산'));
   const carryToggle = el('button', `toggle-btn${settings.carryOverTurnTime ? ' active' : ''}`, settings.carryOverTurnTime ? 'ON' : 'OFF');
   carryToggle.addEventListener('click', () => callbacks.toggleCarryOver());
-  carryRow.appendChild(carryLabel);
   carryRow.appendChild(carryToggle);
-  timerSection.appendChild(carryRow);
+  optSection.appendChild(carryRow);
 
   const soundRow = el('div', 'toggle-row');
   soundRow.appendChild(el('span', '', '사운드'));
   const soundToggle = el('button', `toggle-btn${settings.soundEnabled ? ' active' : ''}`, settings.soundEnabled ? 'ON' : 'OFF');
   soundToggle.addEventListener('click', () => callbacks.toggleSound());
   soundRow.appendChild(soundToggle);
-  timerSection.appendChild(soundRow);
+  optSection.appendChild(soundRow);
 
-  rightCol.appendChild(timerSection);
-  body.appendChild(rightCol);
+  wrap.appendChild(timerSection);
+  wrap.appendChild(optSection);
 
-  wrap.appendChild(body);
-
-  // Buttons
-  const btnRow = el('div', 'settings-buttons');
-  const historyBtn = el('button', 'btn-secondary', '히스토리');
-  historyBtn.addEventListener('click', callbacks.openHistory);
-  btnRow.appendChild(historyBtn);
+  // Nav buttons
+  const nav = el('div', 'settings-nav');
+  const prevBtn = el('button', 'btn-secondary', '← 이전');
+  prevBtn.addEventListener('click', callbacks.goToPage1);
+  nav.appendChild(prevBtn);
 
   const startBtn = el('button', 'btn-primary', '게임 시작');
   startBtn.addEventListener('click', callbacks.startGame);
-  btnRow.appendChild(startBtn);
+  nav.appendChild(startBtn);
 
-  wrap.appendChild(btnRow);
+  wrap.appendChild(nav);
   container.appendChild(wrap);
-}
-
-function openColorPicker(screenContainer, playerIndex, currentColor, onSelect) {
-  const existing = screenContainer.querySelector('.color-picker-overlay');
-  if (existing) existing.remove();
-
-  const overlay = el('div', 'color-picker-overlay');
-  const panel = el('div', 'color-picker-panel');
-  panel.appendChild(el('div', 'color-picker-title', '미플 색상 선택'));
-
-  const grid = el('div', 'color-grid');
-  for (const c of COLOR_PALETTE) {
-    const swatch = el('button', `color-swatch${c.hex === currentColor ? ' selected' : ''}`);
-    swatch.style.backgroundColor = c.hex;
-    swatch.title = c.name;
-    swatch.addEventListener('click', () => {
-      onSelect(playerIndex, c.hex);
-      overlay.remove();
-    });
-    grid.appendChild(swatch);
-  }
-  panel.appendChild(grid);
-
-  const cancelBtn = el('button', 'btn-secondary color-cancel', '취소');
-  cancelBtn.addEventListener('click', () => overlay.remove());
-  panel.appendChild(cancelBtn);
-
-  overlay.appendChild(panel);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-  screenContainer.appendChild(overlay);
 }
 
 function makeTimerInput(label, value, min, max, onChange) {
@@ -315,7 +337,6 @@ export function updateGameUI(gameState) {
   const pauseBtn = document.getElementById('btn-pause');
   if (pauseBtn) {
     if (state === 'idle' && document.querySelector('.player-area.active') === null) {
-      // Check if game has started by seeing if any player has turnCount > 0
       const gameStarted = playerStates.some(p => p.turnCount > 0);
       pauseBtn.textContent = gameStarted ? '▶ 재개' : '⏸ 일시정지';
     }
