@@ -81,8 +81,22 @@ function showSettings() {
     },
     setTimerValue(key, value) {
       settings[key] = value;
-      settings.presetName = '';
+      settings.presetName = 'Custom';
+      settings.customValues = {
+        turnTime: settings.turnTime,
+        mainTime: settings.mainTime,
+        penaltyTime: settings.penaltyTime,
+      };
       saveSettings(settings);
+    },
+    setCustomPreset() {
+      if (!settings.customValues) return;
+      settings.presetName = 'Custom';
+      settings.turnTime = settings.customValues.turnTime;
+      settings.mainTime = settings.customValues.mainTime;
+      settings.penaltyTime = settings.customValues.penaltyTime;
+      saveSettings(settings);
+      showSettings();
     },
     openHistory() {
       showScreen('history');

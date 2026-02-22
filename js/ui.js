@@ -171,15 +171,31 @@ function renderSettingsPage2(container, settings, callbacks) {
     btn.addEventListener('click', () => callbacks.setPreset(name));
     presetsCol.appendChild(btn);
   }
+  const hasCustom = !!settings.customValues;
+  const customBtn = el('button', `preset-btn custom-preset${settings.presetName === 'Custom' ? ' active' : ''}`);
+  customBtn.appendChild(el('span', 'preset-name', 'Custom'));
+  customBtn.appendChild(el('span', 'preset-time', ''));
+  if (!hasCustom) customBtn.disabled = true;
+  customBtn.addEventListener('click', () => callbacks.setCustomPreset());
+  presetsCol.appendChild(customBtn);
+
+  function updatePresetActive() {
+    presetsCol.querySelectorAll('.preset-btn').forEach(btn => {
+      const name = btn.querySelector('.preset-name')?.textContent;
+      btn.classList.toggle('active', name === settings.presetName);
+    });
+  }
+
   timerLayout.appendChild(presetsCol);
 
   // Right: timer details
   const detailCol = el('div', 'timer-detail-col');
 
   const timerValues = el('div', 'timer-values');
-  timerValues.appendChild(makeTimerInput('메인 시간', Math.round(settings.mainTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('mainTime', v * 60)));
-  timerValues.appendChild(makeTimerInput('턴 딜레이', settings.turnTime, 5, 300, '초', (v) => callbacks.setTimerValue('turnTime', v)));
-  timerValues.appendChild(makeTimerInput('초과 시 추가 시간', Math.round(settings.penaltyTime / 60), 1, 30, '분', (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
+  const onTimerChange = (key, transform) => (v) => { callbacks.setTimerValue(key, transform(v)); updatePresetActive(); };
+  timerValues.appendChild(makeTimerInput('메인 시간', Math.round(settings.mainTime / 60), 1, 120, '분', onTimerChange('mainTime', v => v * 60)));
+  timerValues.appendChild(makeTimerInput('턴 딜레이', settings.turnTime, 5, 300, '초', onTimerChange('turnTime', v => v)));
+  timerValues.appendChild(makeTimerInput('초과 시 추가 시간', Math.round(settings.penaltyTime / 60), 1, 30, '분', onTimerChange('penaltyTime', v => v * 60)));
 
   const hint = el('div', 'timer-hint', '총 시간 소진 → 패널티 + 추가시간 부여');
   timerValues.appendChild(hint);
