@@ -478,11 +478,61 @@ function buildUnifiedStats(stats) {
     const zoomInBtn = el('button', 'gantt-zoom-btn', '+');
     zoomOutBtn.disabled = true;
 
+    // Tick marks row (synced scroll, no scrollbar)
+    const ticksWrap = el('div', 'gantt-ticks-wrap gantt-scroll-wrap');
+    scrollWraps.push(ticksWrap);
+    const ticksInner = el('div', 'gantt-inner');
+    const ticks = el('div', 'gantt-ticks');
+    ticksInner.appendChild(ticks);
+    ticksWrap.appendChild(ticksInner);
+
+    function formatTickLabel(ms) {
+      const totalSec = Math.round(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      if (m === 0 && s === 0) return '0';
+      if (s === 0) return `${m}m`;
+      return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function buildTicks(z) {
+      ticks.innerHTML = '';
+      const totalMin = totalMs / 60000;
+      // Pick interval so ~3-8 ticks are visible per screen width
+      const visibleMin = totalMin / z;
+      const candidates = [1, 2, 5, 10, 15, 20, 30, 60];
+      let intervalMin = candidates.find(c => visibleMin / c <= 8) || 60;
+      const intervalMs = intervalMin * 60000;
+
+      // Always show start
+      const startTick = el('div', 'gantt-tick');
+      startTick.style.left = '0%';
+      startTick.textContent = '0';
+      ticks.appendChild(startTick);
+
+      // Middle ticks
+      for (let t = intervalMs; t < totalMs; t += intervalMs) {
+        const tick = el('div', 'gantt-tick');
+        tick.style.left = `${(t / totalMs) * 100}%`;
+        tick.textContent = formatTickLabel(t);
+        ticks.appendChild(tick);
+      }
+
+      // Always show end
+      const endTick = el('div', 'gantt-tick gantt-tick-end');
+      endTick.style.left = '100%';
+      endTick.textContent = formatTickLabel(totalMs);
+      ticks.appendChild(endTick);
+    }
+
+    buildTicks(zoom);
+
     function setZoom(newZoom) {
       zoom = Math.max(1, Math.min(5, newZoom));
       section.querySelectorAll('.gantt-inner').forEach(inner => {
         inner.style.width = `${zoom * 100}%`;
       });
+      buildTicks(zoom);
       zoomOutBtn.disabled = (zoom <= 1);
       zoomInBtn.disabled = (zoom >= 5);
     }
@@ -492,22 +542,6 @@ function buildUnifiedStats(stats) {
     controls.append(zoomOutBtn, zoomInBtn);
     ganttControls = controls;
 
-    // Tick marks row (synced scroll, no scrollbar)
-    const ticksWrap = el('div', 'gantt-ticks-wrap gantt-scroll-wrap');
-    scrollWraps.push(ticksWrap);
-    const ticksInner = el('div', 'gantt-inner');
-    const ticks = el('div', 'gantt-ticks');
-    const intervalMin = totalMs <= 5 * 60000 ? 1 : totalMs <= 20 * 60000 ? 5 : 10;
-    const intervalMs = intervalMin * 60000;
-    for (let t = 0; t <= totalMs; t += intervalMs) {
-      const tick = el('div', 'gantt-tick');
-      tick.style.left = `${(t / totalMs) * 100}%`;
-      const mins = Math.round(t / 60000);
-      tick.textContent = mins === 0 ? '0' : `${mins}m`;
-      ticks.appendChild(tick);
-    }
-    ticksInner.appendChild(ticks);
-    ticksWrap.appendChild(ticksInner);
     section.appendChild(ticksWrap);
   }
 

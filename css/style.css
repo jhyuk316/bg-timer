@@ -749,6 +749,8 @@ button:disabled { opacity: 0.4; cursor: default; }
   transform: translateX(-50%);
   white-space: nowrap;
 }
+.gantt-tick:first-child { transform: none; }
+.gantt-tick-end { transform: translateX(-100%); }
 .gantt-tick::after {
   content: '';
   position: absolute;
@@ -758,6 +760,8 @@ button:disabled { opacity: 0.4; cursor: default; }
   height: 4px;
   background: var(--text-dim);
 }
+.gantt-tick:first-child::after { left: 0; }
+.gantt-tick-end::after { left: 100%; }
 .gantt-timeline {
   position: relative;
   height: 1.2rem;

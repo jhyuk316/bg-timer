@@ -212,10 +212,21 @@ export function createGame(settings) {
     game.gameEndTime = Date.now();
     game.state = State.IDLE;
 
-    const totalPlayTime = game.gameEndTime - (game.gameStartTime || game.gameEndTime);
+    const totalActiveTime = game.playerStates.reduce((sum, p) => sum + p.totalTimeUsed, 0) + game.referee.totalTime;
+    // Compress turn log: remove pause gaps so entries are contiguous
+    const compressedLog = [];
+    let offset = 0;
+    let prevEnd = 0;
+    for (const e of game.turnLog) {
+      if (e.endMs == null) continue;
+      const gap = e.startMs - prevEnd;
+      offset += gap;
+      compressedLog.push({ ...e, startMs: e.startMs - offset, endMs: e.endMs - offset });
+      prevEnd = e.endMs;
+    }
     const stats = {
-      totalPlayTime,
-      turnLog: game.turnLog.map(e => ({ ...e })),
+      totalPlayTime: totalActiveTime,
+      turnLog: compressedLog,
       players: game.playerStates.map((p, i) => ({
         name: p.name,
         color: p.color,
