@@ -27,15 +27,24 @@ function playTone(freq, duration, type = 'sine') {
   osc.stop(ctx.currentTime + duration);
 }
 
-export function playTurnWarning() {
-  playTone(880, 0.3);
-  setTimeout(() => playTone(880, 0.3), 350);
+export function playTurnStart() {
+  playTone(660, 0.15);
+  setTimeout(() => playTone(880, 0.15), 180);
+}
+
+export function playTurnEnd() {
+  playTone(660, 0.12);
 }
 
 export function playMainWarning() {
   playTone(660, 0.2);
   setTimeout(() => playTone(880, 0.2), 250);
   setTimeout(() => playTone(1100, 0.3), 500);
+}
+
+export function playPause() {
+  playTone(550, 0.1);
+  setTimeout(() => playTone(440, 0.15), 130);
 }
 
 export function playPenaltyAlert() {
