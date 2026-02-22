@@ -44,7 +44,7 @@ function showSettings() {
       showSettings();
     },
     setPlayerName(paletteIndex, name) {
-      settings.players[paletteIndex].name = name || `Player ${paletteIndex + 1}`;
+      settings.players[paletteIndex].name = name || COLOR_PALETTE[paletteIndex].name;
       saveSettings(settings);
     },
     applyColorPreset(name) {
@@ -186,10 +186,107 @@ function showGame() {
 }
 
 function wireGameControls() {
-  // Player taps
+  const grid = document.getElementById('player-grid');
   const areas = appEl.querySelectorAll('.player-area');
+
+  // --- Long press drag-to-swap state ---
+  let longPressTimer = null;
+  let isDragging = false;
+  let dragSource = null;
+  let startX = 0;
+  let startY = 0;
+  const LONG_PRESS_MS = 500;
+  const MOVE_THRESHOLD = 10;
+
+  function canDrag() {
+    const state = game.getState().state;
+    return pausedState || state === 'referee' || state === 'idle';
+  }
+
+  function getPointerPos(e) {
+    if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function getAreaAtPoint(x, y) {
+    const els = document.elementsFromPoint(x, y);
+    return els.find(el => el.classList && el.classList.contains('player-area')) || null;
+  }
+
+  function swapDOM(a, b) {
+    if (a === b) return;
+    const parent = a.parentNode;
+    const aNext = a.nextSibling === b ? a : a.nextSibling;
+    parent.insertBefore(a, b);
+    parent.insertBefore(b, aNext);
+  }
+
+  function startDrag(area) {
+    isDragging = true;
+    dragSource = area;
+    area.classList.add('dragging');
+    try { navigator.vibrate(50); } catch (e) { /* unsupported */ }
+  }
+
+  function endDrag() {
+    if (dragSource) dragSource.classList.remove('dragging');
+    grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    isDragging = false;
+    dragSource = null;
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+
+  function handlePointerDown(e, area) {
+    if (!canDrag()) return;
+    const pos = getPointerPos(e);
+    startX = pos.x;
+    startY = pos.y;
+    longPressTimer = setTimeout(() => startDrag(area), LONG_PRESS_MS);
+  }
+
+  function handlePointerMove(e) {
+    const pos = getPointerPos(e);
+    if (longPressTimer && !isDragging) {
+      const dx = pos.x - startX;
+      const dy = pos.y - startY;
+      if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      return;
+    }
+    if (!isDragging) return;
+    e.preventDefault();
+    const target = getAreaAtPoint(pos.x, pos.y);
+    grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    if (target && target !== dragSource && target.classList.contains('player-area')) {
+      target.classList.add('drag-over');
+    }
+  }
+
+  function handlePointerUp(e) {
+    if (longPressTimer && !isDragging) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+      return; // normal tap — let click handler fire
+    }
+    if (!isDragging) return;
+    const pos = e.changedTouches
+      ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
+      : { x: e.clientX, y: e.clientY };
+    const target = getAreaAtPoint(pos.x, pos.y);
+    if (target && target !== dragSource && target.classList.contains('player-area')) {
+      swapDOM(dragSource, target);
+    }
+    endDrag();
+  }
+
+  // Wire touch + mouse events on each player area
   areas.forEach((area) => {
-    area.addEventListener('click', () => {
+    // Tap handler
+    area.addEventListener('click', (e) => {
+      if (isDragging) { e.preventDefault(); return; }
       const idx = parseInt(area.dataset.player, 10);
       if (pausedState) {
         game.resume(pausedState.prevState, pausedState.prevPlayer);
@@ -197,7 +294,20 @@ function wireGameControls() {
       }
       game.tapPlayer(idx);
     });
+
+    // Touch events
+    area.addEventListener('touchstart', (e) => handlePointerDown(e, area), { passive: true });
+    // Mouse events
+    area.addEventListener('mousedown', (e) => { if (e.button === 0) handlePointerDown(e, area); });
   });
+
+  // Move & up on grid (capture drag across areas)
+  grid.addEventListener('touchmove', handlePointerMove, { passive: false });
+  grid.addEventListener('touchend', handlePointerUp);
+  grid.addEventListener('touchcancel', endDrag);
+  grid.addEventListener('mousemove', handlePointerMove);
+  grid.addEventListener('mouseup', handlePointerUp);
+  grid.addEventListener('mouseleave', endDrag);
 
   // Pause
   document.getElementById('btn-pause').addEventListener('click', () => {
@@ -210,7 +320,7 @@ function wireGameControls() {
 
   // End
   document.getElementById('btn-end').addEventListener('click', () => {
-    if (confirm('\uAC8C\uC784\uC744 \uC885\uB8CC\uD560\uAE4C\uC694?')) {
+    if (confirm('게임을 종료할까요?')) {
       lastStats = game.end();
       showScreen('stats');
     }

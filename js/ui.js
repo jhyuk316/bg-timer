@@ -71,7 +71,6 @@ function renderSettingsPage1(container, settings, callbacks) {
 
   // Meeple selection section (hero)
   const meepleSection = el('div', 'settings-section');
-  meepleSection.appendChild(el('label', 'settings-label', '플레이어 선택'));
 
   const meepleGrid = el('div', 'meeple-grid');
   for (let i = 0; i < COLOR_PALETTE.length; i++) {

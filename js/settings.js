@@ -51,7 +51,7 @@ export function getDefaultSettings() {
     activeMeeples: [true, false, false, false, false, false, true, false, false, false],
     playerCount: 2,
     players: Array.from({ length: 10 }, (_, i) => ({
-      name: `Player ${i + 1}`,
+      name: COLOR_PALETTE[i].name,
       color: COLOR_PALETTE[i].hex,
     })),
     presetName: 'Medium',
@@ -74,7 +74,7 @@ export function loadSettings() {
     if (merged.players.length < 10) {
       while (merged.players.length < 10) {
         const i = merged.players.length;
-        merged.players.push({ name: `Player ${i + 1}`, color: COLOR_PALETTE[i].hex });
+        merged.players.push({ name: COLOR_PALETTE[i].name, color: COLOR_PALETTE[i].hex });
       }
     }
 
