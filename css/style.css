@@ -1,0 +1,641 @@
+/* === Reset & Base === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --surface: #1f2940;
+  --surface2: #263250;
+  --text: #e0e0e0;
+  --text-dim: #8899aa;
+  --danger: #e05050;
+  --success: #4caf7a;
+  --radius: 10px;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body.flash {
+  animation: flashAnim 0.4s;
+}
+@keyframes flashAnim {
+  0%, 100% { background: var(--bg); }
+  50% { background: #4a1a1a; }
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Buttons === */
+button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: opacity 0.15s, transform 0.1s;
+  color: var(--text);
+  background: var(--surface2);
+}
+button:active { transform: scale(0.96); }
+button:disabled { opacity: 0.4; cursor: default; }
+
+.btn-primary {
+  background: #4477B0;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+}
+.btn-secondary {
+  background: var(--surface2);
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+.btn-back {
+  background: transparent;
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+.btn-small {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}
+.btn-danger { color: var(--danger); }
+
+/* === Settings Screen === */
+.settings-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1rem 2rem;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+.settings-title {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
+}
+.settings-section {
+  margin-bottom: 1.5rem;
+}
+.settings-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Count row */
+.count-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.count-btn {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+.count-btn.active {
+  background: #4477B0;
+  color: #fff;
+}
+
+/* Color presets */
+.preset-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.preset-color-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-right: 0.25rem;
+}
+.preset-color-btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--surface);
+  border-radius: 6px;
+}
+
+/* Player cards */
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border-left: 4px solid;
+  margin-bottom: 0.5rem;
+}
+.player-meeple {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.player-meeple svg { width: 100%; height: 100%; }
+.player-name-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--surface2);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+}
+.player-name-input:focus { border-color: #4477B0; }
+.color-pick-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+/* Color picker overlay */
+.color-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.color-picker-panel {
+  background: var(--bg2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  width: 90%;
+  max-width: 360px;
+}
+.color-picker-title {
+  text-align: center;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-dim);
+}
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.color-swatch {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  padding: 0;
+  min-width: 0;
+}
+.color-swatch.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+}
+.color-cancel { width: 100%; }
+
+/* Timer presets */
+.preset-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.preset-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 0.5rem 0.3rem;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+.preset-btn.active {
+  background: #4477B0;
+  color: #fff;
+}
+
+/* Timer inputs */
+.timer-values {
+  margin-top: 0.75rem;
+}
+.timer-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.timer-input-label {
+  font-size: 0.9rem;
+}
+.timer-input {
+  width: 80px;
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-align: center;
+  outline: none;
+}
+.timer-input:focus { border-color: #4477B0; }
+
+/* Toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+}
+.toggle-btn {
+  padding: 0.3rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--surface);
+}
+.toggle-btn.active {
+  background: var(--success);
+  color: #fff;
+}
+
+/* Settings buttons */
+.settings-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.settings-buttons .btn-secondary { flex: 0 0 auto; }
+.settings-buttons .btn-primary { flex: 1; }
+
+/* === Game Screen === */
+
+/* Referee bar */
+.referee-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: var(--surface);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.referee-bar.active {
+  background: var(--surface2);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+}
+.referee-icon { font-size: 1.1em; }
+.referee-label { margin-right: auto; }
+.referee-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.referee-total {
+  font-size: 0.85em;
+  color: var(--text-dim);
+}
+
+/* Player grid */
+.player-grid {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+}
+.players-1 { grid-template: 1fr / 1fr; }
+.players-2 { grid-template: 1fr 1fr / 1fr; }
+.players-3 { grid-template: 1fr 1fr / 1fr 1fr; }
+.players-3 .player-area:first-child { grid-column: 1 / -1; }
+.players-4 { grid-template: 1fr 1fr / 1fr 1fr; }
+.players-5 { grid-template: 1fr 1fr / 1fr 1fr 1fr; }
+.players-5 .player-area:nth-child(1),
+.players-5 .player-area:nth-child(2) {
+  /* first row: 2 items spanning 3 cols */
+}
+.players-5 {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1fr 1fr;
+}
+.players-5 .player-area:nth-child(1) { grid-column: 1 / 4; }
+.players-5 .player-area:nth-child(2) { grid-column: 4 / 7; }
+.players-5 .player-area:nth-child(3) { grid-column: 1 / 3; }
+.players-5 .player-area:nth-child(4) { grid-column: 3 / 5; }
+.players-5 .player-area:nth-child(5) { grid-column: 5 / 7; }
+
+.player-grid.paused {
+  opacity: 0.5;
+}
+
+/* Player area */
+.player-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: var(--surface);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  gap: 0.15rem;
+}
+.player-area.active {
+  background: color-mix(in srgb, var(--player-color) 25%, var(--surface));
+  box-shadow: inset 0 0 0 3px var(--player-color);
+}
+.player-area.in-reserve {
+  background: color-mix(in srgb, var(--player-color) 15%, #2a1a1a);
+}
+
+.game-meeple {
+  width: clamp(24px, 6vw, 48px);
+  height: clamp(24px, 6vw, 48px);
+  color: var(--player-color);
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.player-area.active .game-meeple {
+  opacity: 1;
+  transform: scale(1.15);
+}
+.game-meeple svg { width: 100%; height: 100%; }
+
+.game-player-name {
+  font-size: clamp(0.7rem, 2.5vw, 0.95rem);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.player-area.active .game-player-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.game-timer {
+  font-size: clamp(1.5rem, 8vw, 3rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.player-area.active .game-timer {
+  color: #fff;
+}
+
+.game-phase {
+  font-size: clamp(0.6rem, 2vw, 0.8rem);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  min-height: 1em;
+}
+.player-area.in-reserve .game-phase {
+  color: #e0c850;
+}
+
+.game-reserve {
+  font-size: clamp(0.65rem, 2vw, 0.85rem);
+  color: var(--text-dim);
+  min-height: 1em;
+}
+
+.game-penalty {
+  font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+  color: var(--danger);
+  font-weight: 600;
+  min-height: 1em;
+}
+
+/* Game controls */
+.game-controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.ctrl-btn {
+  flex: 1;
+  padding: 0.65rem;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+.ctrl-danger { color: var(--text-dim); }
+.ctrl-end { color: var(--danger); }
+
+/* === Stats Screen === */
+.stats-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1rem 2rem;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+.stats-title {
+  text-align: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+.stats-total {
+  text-align: center;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.stats-total-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+.stats-total-time {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Player stat cards */
+.stats-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.stats-player-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  border-left: 4px solid var(--player-color);
+}
+.stats-player-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.stats-meeple {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+}
+.stats-meeple svg { width: 100%; height: 100%; }
+.stats-player-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.stats-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Referee stats */
+.stats-referee {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+.stats-referee-title {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+/* Save section */
+.stats-save {
+  margin-bottom: 1rem;
+}
+.stats-name-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+}
+.stats-name-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+}
+.stats-name-input:focus { border-color: #4477B0; }
+
+.stats-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+.stats-buttons .btn-primary { flex: 1; }
+.stats-buttons .btn-secondary { flex: 1; }
+
+/* === History Screen === */
+.history-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.history-title {
+  font-size: 1.2rem;
+}
+.history-date {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.history-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 3rem 0;
+}
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+.history-info { flex: 1; min-width: 0; }
+.history-game-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.history-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.15rem;
+}
+.history-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
