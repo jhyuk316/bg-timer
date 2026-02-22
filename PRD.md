@@ -45,7 +45,7 @@ GitHub Pages로 배포하며, 설치 없이 모바일/데스크톱 브라우저�
 | 6 | Sky | `#6E9EB5` | 5 |
 | 7 | Cobalt | `#3D6A9E` | 6 |
 | 8 | Purple | `#7060A0` | 7 |
-| 9 | Charcoal | `#5C5856` | 8 |
+| 9 | Charcoal | `#455159` | 8 |
 | 10 | Ivory | `#D8D4CF` | 9 |
 
 #### 색상 프리셋 → 팔레트 매핑
@@ -77,7 +77,7 @@ GitHub Pages로 배포하며, 설치 없이 모바일/데스크톱 브라우저�
 | Red `#C94040` | Crimson `#B84040` | 0 |
 | Green `#4A9E6E` | Green `#4A9E6E` | 3 |
 | Blue `#3D6A9E` | Cobalt `#3D6A9E` | 6 |
-| Dark Gray `#4A4545` | Charcoal `#5C5856` | 8 |
+| Dark Gray `#4A4545` | Charcoal `#455159` | 8 |
 
 **엔데버 심해 (Endeavor Deep Sea)** — 심해 탐사 테마. 5인용.
 
@@ -96,7 +96,7 @@ GitHub Pages로 배포하며, 설치 없이 모바일/데스크톱 브라우저�
 | Red `#C94040` | Crimson `#B84040` | 0 |
 | Yellow `#D4B84E` | Amber `#C49645` | 2 |
 | Green `#7EC060` | Green `#4A9E6E` | 3 |
-| Blue `#5CADD4` | Sky `#6E9EB5` | 5 |
+| Blue `#5CADD4` | Cobalt `#3D6A9E` | 6 |
 | Purple `#7B5EA7` | Purple `#7060A0` | 7 |
 
 **Ian O'Toole** — 이안 오툴 아트워크 테마. 5인용.                                                                                                                                                    

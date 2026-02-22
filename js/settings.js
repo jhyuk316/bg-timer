@@ -7,7 +7,7 @@ export const COLOR_PALETTE = [
   { name: 'Sky', hex: '#6E9EB5' },
   { name: 'Cobalt', hex: '#3D6A9E' },
   { name: 'Purple', hex: '#7060A0' },
-  { name: 'Charcoal', hex: '#5C5856' },
+  { name: 'Charcoal', hex: '#455159' },
   { name: 'Ivory', hex: '#D8D4CF' },
 ];
 
@@ -36,7 +36,7 @@ export const COLOR_PRESETS = {
   },
   '윙스팬': {
     colors: ['#C94040', '#D4B84E', '#7EC060', '#5CADD4', '#7B5EA7'],
-    paletteMap: [0, 2, 3, 5, 7],
+    paletteMap: [0, 2, 3, 6, 7],
     maxPlayers: 5,
   },
   "Ian O'Toole": {
