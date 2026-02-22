@@ -227,17 +227,29 @@ function makeTimerInput(label, value, min, max, unit, onChange) {
 export function renderGameScreen(container, gameState, settings) {
   container.innerHTML = '';
 
-  // Referee bar
+  // Top bar
   const refBar = el('div', 'referee-bar');
   refBar.id = 'referee-bar';
-  const refIcon = el('span', 'referee-icon', '⚖');
-  const refLabel = el('span', 'referee-label', '심판');
+
+  // Left: referee section (visible only when referee active)
+  const refSection = el('div', 'referee-section');
+  refSection.append(el('span', 'referee-icon', '⚖'), el('span', 'referee-label', '심판'));
   const refTime = el('span', 'referee-time', '0:00');
   refTime.id = 'referee-time';
-  const refTotal = el('span', 'referee-total', '총 0:00');
-  refTotal.id = 'referee-total';
-  refBar.append(refIcon, refLabel, refTime, refTotal);
+  refSection.appendChild(refTime);
+  refBar.appendChild(refSection);
+
+  // Center: total active time
+  const totalTime = el('span', 'game-total-time', '0:00');
+  totalTime.id = 'game-total-time';
+  refBar.appendChild(totalTime);
+
   container.appendChild(refBar);
+
+  // Start time (below referee bar, left corner)
+  const startTime = el('div', 'game-start-time');
+  startTime.id = 'game-start-time';
+  container.appendChild(startTime);
 
   // Player grid
   const grid = el('div', `player-grid players-${settings.playerCount}`);
@@ -271,27 +283,36 @@ export function renderGameScreen(container, gameState, settings) {
   }
   container.appendChild(grid);
 
-  // Control bar
+  // Control bar (single button)
   const controls = el('div', 'game-controls');
   const pauseBtn = el('button', 'ctrl-btn', '⏸ 일시정지');
   pauseBtn.id = 'btn-pause';
-  const endBtn = el('button', 'ctrl-btn ctrl-end', '⏹ 게임 종료');
-  endBtn.id = 'btn-end';
-  controls.append(pauseBtn, endBtn);
+  controls.appendChild(pauseBtn);
   container.appendChild(controls);
 }
 
 export function updateGameUI(gameState) {
-  const { state, activePlayer, playerStates, referee } = gameState;
+  const { state, activePlayer, playerStates, referee, gameStartTime, totalActiveTime } = gameState;
 
-  // Referee bar
+  // Top bar
   const refBar = document.getElementById('referee-bar');
   const refTime = document.getElementById('referee-time');
-  const refTotal = document.getElementById('referee-total');
   if (refBar) {
     refBar.classList.toggle('active', state === 'referee');
     if (refTime) refTime.textContent = formatTime(referee.currentLapTime);
-    if (refTotal) refTotal.textContent = `총 ${formatTime(referee.totalTime)}`;
+  }
+
+  // Total active time (center)
+  const totalTimeEl = document.getElementById('game-total-time');
+  if (totalTimeEl) totalTimeEl.textContent = formatTime(totalActiveTime || 0);
+
+  // Start time (HH:MM)
+  const startTimeEl = document.getElementById('game-start-time');
+  if (startTimeEl && gameStartTime) {
+    const d = new Date(gameStartTime);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    startTimeEl.textContent = `시작 ${hh}:${mm}`;
   }
 
   // Players
@@ -322,14 +343,6 @@ export function updateGameUI(gameState) {
     }
   }
 
-  // Pause button text
-  const pauseBtn = document.getElementById('btn-pause');
-  if (pauseBtn) {
-    if (state === 'idle' && document.querySelector('.player-area.active') === null) {
-      const gameStarted = playerStates.some(p => p.turnCount > 0);
-      pauseBtn.textContent = gameStarted ? '▶ 재개' : '⏸ 일시정지';
-    }
-  }
 }
 
 // --- Stats Screen ---

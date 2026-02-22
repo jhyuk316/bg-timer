@@ -309,20 +309,16 @@ function wireGameControls() {
   grid.addEventListener('mouseup', handlePointerUp);
   grid.addEventListener('mouseleave', endDrag);
 
-  // Pause
+  // Pause / End (unified button)
   document.getElementById('btn-pause').addEventListener('click', () => {
     if (pausedState) {
-      game.resume(pausedState.prevState, pausedState.prevPlayer);
+      // Paused → end game
+      if (confirm('게임을 종료할까요?')) {
+        lastStats = game.end();
+        showScreen('stats');
+      }
     } else {
       game.pause();
-    }
-  });
-
-  // End
-  document.getElementById('btn-end').addEventListener('click', () => {
-    if (confirm('게임을 종료할까요?')) {
-      lastStats = game.end();
-      showScreen('stats');
     }
   });
 }
@@ -330,7 +326,7 @@ function wireGameControls() {
 function updatePauseUI(isPaused) {
   const btn = document.getElementById('btn-pause');
   if (btn) {
-    btn.textContent = isPaused ? '\u25B6 \uC7AC\uAC1C' : '\u23F8 \uC77C\uC2DC\uC815\uC9C0';
+    btn.textContent = isPaused ? '\u23F9 \uAC8C\uC784 \uC885\uB8CC' : '\u23F8 \uC77C\uC2DC\uC815\uC9C0';
   }
   const grid = document.getElementById('player-grid');
   if (grid) {

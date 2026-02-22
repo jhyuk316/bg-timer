@@ -337,11 +337,12 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 /* === Game Screen === */
 
-/* Referee bar */
+/* Top bar (referee + total time) */
 .referee-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  position: relative;
   padding: 0.4rem 1rem;
   background: var(--surface);
   font-size: 0.85rem;
@@ -352,18 +353,40 @@ button:disabled { opacity: 0.4; cursor: default; }
 .referee-bar.active {
   background: var(--surface2);
   color: var(--text);
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
+}
+.referee-section {
+  position: absolute;
+  left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.referee-bar.active .referee-section {
+  opacity: 1;
 }
 .referee-icon { font-size: 1.1em; }
-.referee-label { }
 .referee-time {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
-.referee-total {
-  font-size: 0.85em;
+.game-total-time {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Start time indicator */
+.game-start-time {
+  position: absolute;
+  top: 2.2rem;
+  left: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
+  opacity: 0.5;
+  z-index: 1;
 }
 
 /* Player grid */
@@ -477,7 +500,6 @@ button:disabled { opacity: 0.4; cursor: default; }
   background: var(--surface);
 }
 .ctrl-danger { color: var(--text-dim); }
-.ctrl-end { color: var(--danger); }
 
 /* === Stats Screen === */
 .stats-wrap {

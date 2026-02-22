@@ -237,6 +237,7 @@ export function createGame(settings) {
     playerStates: game.playerStates,
     referee: game.referee,
     gameStartTime: game.gameStartTime,
+    totalActiveTime: game.playerStates.reduce((sum, p) => sum + p.totalTimeUsed, 0) + game.referee.totalTime,
   });
 
   // Handle visibility change for background accuracy
