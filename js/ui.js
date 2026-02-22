@@ -175,9 +175,13 @@ function renderSettingsPage2(container, settings, callbacks) {
   const detailCol = el('div', 'timer-detail-col');
 
   const timerValues = el('div', 'timer-values');
-  timerValues.appendChild(makeTimerInput('턴 시간 (초)', settings.turnTime, 5, 300, (v) => callbacks.setTimerValue('turnTime', v)));
-  timerValues.appendChild(makeTimerInput('예비시간 (분)', Math.round(settings.reserveTime / 60), 1, 120, (v) => callbacks.setTimerValue('reserveTime', v * 60)));
-  timerValues.appendChild(makeTimerInput('패널티 추가 (분)', Math.round(settings.penaltyTime / 60), 1, 30, (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
+  timerValues.appendChild(makeTimerInput('매 턴 제한 시간', settings.turnTime, 5, 300, '초', (v) => callbacks.setTimerValue('turnTime', v)));
+  timerValues.appendChild(makeTimerInput('예비 시간', Math.round(settings.reserveTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('reserveTime', v * 60)));
+  timerValues.appendChild(makeTimerInput('초과 시 추가 시간', Math.round(settings.penaltyTime / 60), 1, 30, '분', (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
+
+  const hint = el('div', 'timer-hint', '예비시간 소진 → 패널티 + 추가시간 부여');
+  timerValues.appendChild(hint);
+
   detailCol.appendChild(timerValues);
 
   timerLayout.appendChild(detailCol);
@@ -197,9 +201,10 @@ function renderSettingsPage2(container, settings, callbacks) {
   container.appendChild(wrap);
 }
 
-function makeTimerInput(label, value, min, max, onChange) {
+function makeTimerInput(label, value, min, max, unit, onChange) {
   const row = el('div', 'timer-input-row');
   row.appendChild(el('span', 'timer-input-label', label));
+  const inputWrap = el('div', 'timer-input-wrap');
   const input = el('input', 'timer-input');
   input.type = 'number';
   input.min = min;
@@ -212,7 +217,9 @@ function makeTimerInput(label, value, min, max, onChange) {
     e.target.value = v;
     onChange(v);
   });
-  row.appendChild(input);
+  inputWrap.appendChild(input);
+  inputWrap.appendChild(el('span', 'timer-input-unit', unit));
+  row.appendChild(inputWrap);
   return row;
 }
 
