@@ -7,31 +7,41 @@ export const COLOR_PALETTE = [
   { name: 'Sky', hex: '#6E9EB5' },
   { name: 'Cobalt', hex: '#3D6A9E' },
   { name: 'Purple', hex: '#7060A0' },
-  { name: 'Stone', hex: '#9A857E' },
+  { name: 'Charcoal', hex: '#5C5856' },
   { name: 'Ivory', hex: '#D8D4CF' },
 ];
 
 export const DEFAULT_COLORS = ['#B84040', '#3D6A9E', '#C49645', '#4A9E6E', '#7060A0'];
 
 export const COLOR_PRESETS = {
-  "Ian O'Toole": {
-    colors: ['#C4727A', '#D4A24E', '#8BAF6E', '#7CAFC4', '#8E7BB5'],
+  'SETI': {
+    colors: ['#E08840', '#4CAF7A', '#7B5EA7', '#E8E4DF'],
+    paletteMap: [1, 3, 7, 9],
+    maxPlayers: 4,
+  },
+  '백로성': {
+    colors: ['#C94040', '#D4B84E', '#5A9E64', '#4477B0'],
+    paletteMap: [0, 2, 3, 6],
+    maxPlayers: 4,
+  },
+  '버건디의 성': {
+    colors: ['#C94040', '#4A9E6E', '#3D6A9E', '#4A4545'],
+    paletteMap: [0, 3, 6, 8],
+    maxPlayers: 4,
+  },
+  '엔데버 심해': {
+    colors: ['#C94040', '#E0C850', '#50C4A8', '#7B5EA7', '#E8E4DF'],
+    paletteMap: [0, 2, 4, 7, 9],
+    maxPlayers: 5,
+  },
+  '윙스팬': {
+    colors: ['#C94040', '#D4B84E', '#7EC060', '#5CADD4', '#7B5EA7'],
     paletteMap: [0, 2, 3, 5, 7],
     maxPlayers: 5,
   },
-  'SETI': {
-    colors: ['#E8E4DF', '#4CAF7A', '#E08840', '#7B5EA7'],
-    paletteMap: [9, 3, 1, 7],
-    maxPlayers: 4,
-  },
-  '\uBC31\uB85C\uC131': {
-    colors: ['#C94040', '#4477B0', '#D4B84E', '#5A9E64'],
-    paletteMap: [0, 6, 2, 3],
-    maxPlayers: 4,
-  },
-  'Endeavor Deep Sea': {
-    colors: ['#E8E4DF', '#50C4A8', '#E0C850', '#7B5EA7', '#C94040'],
-    paletteMap: [9, 4, 2, 7, 0],
+  "Ian O'Toole": {
+    colors: ['#C4727A', '#D4A24E', '#8BAF6E', '#7CAFC4', '#8E7BB5'],
+    paletteMap: [0, 2, 3, 5, 7],
     maxPlayers: 5,
   },
 };

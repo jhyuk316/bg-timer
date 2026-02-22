@@ -45,50 +45,69 @@ GitHub Pages로 배포하며, 설치 없이 모바일/데스크톱 브라우저�
 | 6 | Sky | `#6E9EB5` | 5 |
 | 7 | Cobalt | `#3D6A9E` | 6 |
 | 8 | Purple | `#7060A0` | 7 |
-| 9 | Stone | `#9A857E` | 8 |
+| 9 | Charcoal | `#5C5856` | 8 |
 | 10 | Ivory | `#D8D4CF` | 9 |
 
 #### 색상 프리셋 → 팔레트 매핑
 
 프리셋 버튼을 누르면 해당 게임의 원본 색상에 대응하는 팔레트 미플만 활성화된다.
 
-**Ian O'Toole** — 5색. On Mars / Lisboa / Weather Machine 분위기.
-
-| 원본 | 팔레트 대체 | 인덱스 |
-|------|------------|--------|
-| Dusty Rose `#C4727A` | Crimson `#B84040` | 0 |
-| Amber `#D4A24E` | Amber `#C49645` | 2 |
-| Sage `#8BAF6E` | Green `#4A9E6E` | 3 |
-| Powder Blue `#7CAFC4` | Sky `#6E9EB5` | 5 |
-| Soft Purple `#8E7BB5` | Purple `#7060A0` | 7 |
-
 **SETI** — 우주 기관 테마. 4인용.
 
 | 원본 | 팔레트 대체 | 인덱스 |
 |------|------------|--------|
-| White `#E8E4DF` | Ivory `#D8D4CF` | 9 |
-| Green `#4CAF7A` | Green `#4A9E6E` | 3 |
 | Orange `#E08840` | Orange `#CC7E3A` | 1 |
+| Green `#4CAF7A` | Green `#4A9E6E` | 3 |
 | Purple `#7B5EA7` | Purple `#7060A0` | 7 |
+| White `#E8E4DF` | Ivory `#D8D4CF` | 9 |
 
 **백로성 (The White Castle)** — 일본 전통 톤. 4인용.
 
 | 원본 | 팔레트 대체 | 인덱스 |
 |------|------------|--------|
 | Red `#C94040` | Crimson `#B84040` | 0 |
-| Blue `#4477B0` | Cobalt `#3D6A9E` | 6 |
 | Yellow `#D4B84E` | Amber `#C49645` | 2 |
 | Green `#5A9E64` | Green `#4A9E6E` | 3 |
+| Blue `#4477B0` | Cobalt `#3D6A9E` | 6 |
 
-**Endeavor Deep Sea** — 심해 탐사 테마. 5인용.
+**버건디의 성 (The Castles of Burgundy)** — 유럽 중세 테마. 4인용.
 
 | 원본 | 팔레트 대체 | 인덱스 |
 |------|------------|--------|
-| Ivory `#E8E4DF` | Ivory `#D8D4CF` | 9 |
-| Mint `#50C4A8` | Teal `#4A9488` | 4 |
-| Yellow `#E0C850` | Amber `#C49645` | 2 |
-| Purple `#7B5EA7` | Purple `#7060A0` | 7 |
 | Red `#C94040` | Crimson `#B84040` | 0 |
+| Green `#4A9E6E` | Green `#4A9E6E` | 3 |
+| Blue `#3D6A9E` | Cobalt `#3D6A9E` | 6 |
+| Dark Gray `#4A4545` | Charcoal `#5C5856` | 8 |
+
+**엔데버 심해 (Endeavor Deep Sea)** — 심해 탐사 테마. 5인용.
+
+| 원본 | 팔레트 대체 | 인덱스 |
+|------|------------|--------|
+| Red `#C94040` | Crimson `#B84040` | 0 |
+| Yellow `#E0C850` | Amber `#C49645` | 2 |
+| Mint `#50C4A8` | Teal `#4A9488` | 4 |
+| Purple `#7B5EA7` | Purple `#7060A0` | 7 |
+| Ivory `#E8E4DF` | Ivory `#D8D4CF` | 9 |
+
+**윙스팬 (Wingspan)** — 조류 수집 테마. 5인용.
+
+| 원본 | 팔레트 대체 | 인덱스 |
+|------|------------|--------|
+| Red `#C94040` | Crimson `#B84040` | 0 |
+| Yellow `#D4B84E` | Amber `#C49645` | 2 |
+| Green `#7EC060` | Green `#4A9E6E` | 3 |
+| Blue `#5CADD4` | Sky `#6E9EB5` | 5 |
+| Purple `#7B5EA7` | Purple `#7060A0` | 7 |
+
+**Ian O'Toole** — 이안 오툴 아트워크 테마. 5인용.                                                                                                                                                    
+                                                                                                                                                                                                     
+| 원본 | 팔레트 대체 | 인덱스 |                                                                                                                                                                    
+|------|------------|--------|
+| Dusty Rose `#C4727A` | Crimson `#B84040` | 0 |
+| Amber `#D4A24E` | Amber `#C49645` | 2 |
+| Sage `#8BAF6E` | Green `#4A9E6E` | 3 |
+| Powder Blue `#7CAFC4` | Sky `#6E9EB5` | 5 |
+| Soft Purple `#8E7BB5` | Purple `#7060A0` | 7 |
 
 ### 2. 타이머 프리셋
 
