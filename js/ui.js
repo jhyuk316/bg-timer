@@ -32,6 +32,12 @@ export function renderSettingsScreen(container, settings, callbacks) {
   // Title
   wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
 
+  // Two-column body
+  const body = el('div', 'settings-body');
+
+  // === Left column: players ===
+  const leftCol = el('div', 'settings-col');
+
   // Player count
   const countSection = el('div', 'settings-section');
   countSection.appendChild(el('label', 'settings-label', '플레이어 수'));
@@ -42,13 +48,12 @@ export function renderSettingsScreen(container, settings, callbacks) {
     countRow.appendChild(btn);
   }
   countSection.appendChild(countRow);
-  wrap.appendChild(countSection);
+  leftCol.appendChild(countSection);
 
   // Players
   const playersSection = el('div', 'settings-section');
   playersSection.appendChild(el('label', 'settings-label', '플레이어 설정'));
 
-  // Color preset row
   const presetColorRow = el('div', 'preset-color-row');
   const presetLabel = el('span', 'preset-color-label', '색상 프리셋:');
   presetColorRow.appendChild(presetLabel);
@@ -87,9 +92,12 @@ export function renderSettingsScreen(container, settings, callbacks) {
 
     playersSection.appendChild(card);
   }
-  wrap.appendChild(playersSection);
+  leftCol.appendChild(playersSection);
+  body.appendChild(leftCol);
 
-  // Timer preset
+  // === Right column: timer ===
+  const rightCol = el('div', 'settings-col');
+
   const timerSection = el('div', 'settings-section');
   timerSection.appendChild(el('label', 'settings-label', '타이머 프리셋'));
   const presetRow = el('div', 'preset-row');
@@ -100,14 +108,12 @@ export function renderSettingsScreen(container, settings, callbacks) {
   }
   timerSection.appendChild(presetRow);
 
-  // Timer values
   const timerValues = el('div', 'timer-values');
   timerValues.appendChild(makeTimerInput('턴 시간 (초)', settings.turnTime, 5, 300, (v) => callbacks.setTimerValue('turnTime', v)));
   timerValues.appendChild(makeTimerInput('예비시간 (분)', Math.round(settings.reserveTime / 60), 1, 120, (v) => callbacks.setTimerValue('reserveTime', v * 60)));
   timerValues.appendChild(makeTimerInput('패널티 추가 (분)', Math.round(settings.penaltyTime / 60), 1, 30, (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
   timerSection.appendChild(timerValues);
 
-  // Carry-over toggle
   const carryRow = el('div', 'toggle-row');
   const carryLabel = el('span', '', '남은 턴 시간 → 예비시간 합산');
   const carryToggle = el('button', `toggle-btn${settings.carryOverTurnTime ? ' active' : ''}`, settings.carryOverTurnTime ? 'ON' : 'OFF');
@@ -116,7 +122,6 @@ export function renderSettingsScreen(container, settings, callbacks) {
   carryRow.appendChild(carryToggle);
   timerSection.appendChild(carryRow);
 
-  // Sound toggle
   const soundRow = el('div', 'toggle-row');
   soundRow.appendChild(el('span', '', '사운드'));
   const soundToggle = el('button', `toggle-btn${settings.soundEnabled ? ' active' : ''}`, settings.soundEnabled ? 'ON' : 'OFF');
@@ -124,7 +129,10 @@ export function renderSettingsScreen(container, settings, callbacks) {
   soundRow.appendChild(soundToggle);
   timerSection.appendChild(soundRow);
 
-  wrap.appendChild(timerSection);
+  rightCol.appendChild(timerSection);
+  body.appendChild(rightCol);
+
+  wrap.appendChild(body);
 
   // Buttons
   const btnRow = el('div', 'settings-buttons');
@@ -329,13 +337,12 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   // Unified stats + gantt
   wrap.appendChild(buildUnifiedStats(stats));
 
-  // Game name input
-  const saveSection = el('div', 'stats-save');
-  const nameLabel = el('label', 'stats-name-label', '게임명');
+  // Save row: [input] [저장] [새 게임]
+  const saveRow = el('div', 'stats-save-row');
   const nameInput = el('input', 'stats-name-input');
   nameInput.type = 'text';
   nameInput.id = 'game-name-input';
-  nameInput.placeholder = 'Game - 날짜';
+  nameInput.placeholder = '게임명';
   nameInput.setAttribute('list', 'game-name-list');
 
   const datalist = document.createElement('datalist');
@@ -346,11 +353,6 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
     datalist.appendChild(opt);
   }
 
-  saveSection.append(nameLabel, nameInput, datalist);
-  wrap.appendChild(saveSection);
-
-  // Buttons
-  const btnRow = el('div', 'stats-buttons');
   const saveBtn = el('button', 'btn-primary', '저장');
   saveBtn.addEventListener('click', () => {
     const name = document.getElementById('game-name-input').value.trim();
@@ -358,8 +360,8 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   });
   const newBtn = el('button', 'btn-secondary', '새 게임');
   newBtn.addEventListener('click', callbacks.newGame);
-  btnRow.append(saveBtn, newBtn);
-  wrap.appendChild(btnRow);
+  saveRow.append(nameInput, datalist, saveBtn, newBtn);
+  wrap.appendChild(saveRow);
 
   container.appendChild(wrap);
 }
