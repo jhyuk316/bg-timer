@@ -1,27 +1,17 @@
 export const COLOR_PALETTE = [
-  { name: 'Crimson', hex: '#C94040' },
-  { name: 'Coral', hex: '#E07060' },
-  { name: 'Dusty Rose', hex: '#C4727A' },
-  { name: 'Magenta', hex: '#B8456B' },
-  { name: 'Sienna', hex: '#D47F52' },
-  { name: 'Orange', hex: '#E08840' },
-  { name: 'Amber', hex: '#D4A24E' },
-  { name: 'Gold', hex: '#E0C850' },
-  { name: 'Sage', hex: '#8BAF6E' },
-  { name: 'Emerald', hex: '#4CAF7A' },
-  { name: 'Teal', hex: '#4E9E8E' },
-  { name: 'Turquoise', hex: '#50C4C4' },
-  { name: 'Sky', hex: '#7CAFC4' },
-  { name: 'Cobalt', hex: '#4477B0' },
-  { name: 'Navy', hex: '#2B5278' },
-  { name: 'Lavender', hex: '#8E7BB5' },
-  { name: 'Purple', hex: '#7B5EA7' },
-  { name: 'Ivory', hex: '#E8E4DF' },
-  { name: 'Stone', hex: '#A89088' },
-  { name: 'Espresso', hex: '#6B4E3D' },
+  { name: 'Crimson', hex: '#B84040' },
+  { name: 'Orange', hex: '#CC7E3A' },
+  { name: 'Amber', hex: '#C49645' },
+  { name: 'Green', hex: '#4A9E6E' },
+  { name: 'Teal', hex: '#4A9488' },
+  { name: 'Sky', hex: '#6E9EB5' },
+  { name: 'Cobalt', hex: '#3D6A9E' },
+  { name: 'Purple', hex: '#7060A0' },
+  { name: 'Stone', hex: '#9A857E' },
+  { name: 'Ivory', hex: '#D8D4CF' },
 ];
 
-export const DEFAULT_COLORS = ['#C94040', '#4477B0', '#D4A24E', '#4CAF7A', '#8E7BB5'];
+export const DEFAULT_COLORS = ['#B84040', '#3D6A9E', '#C49645', '#4A9E6E', '#7060A0'];
 
 export const COLOR_PRESETS = {
   "Ian O'Toole": {
