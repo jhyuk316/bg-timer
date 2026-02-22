@@ -37,6 +37,19 @@ body.flash {
   flex-direction: column;
 }
 
+/* Force landscape: rotate when portrait */
+@media screen and (orientation: portrait) {
+  #app {
+    position: fixed;
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    top: 0;
+    left: 100vw;
+  }
+}
+
 /* === Buttons === */
 button {
   font-family: inherit;

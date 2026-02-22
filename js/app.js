@@ -248,6 +248,11 @@ function init() {
   setSoundEnabled(settings.soundEnabled);
   showScreen('settings');
 
+  // Force landscape orientation
+  try {
+    screen.orientation.lock('landscape').catch(() => {});
+  } catch (e) { /* unsupported */ }
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
