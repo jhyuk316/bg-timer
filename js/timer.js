@@ -129,6 +129,7 @@ export function createGame(settings) {
     } else if (game.state === State.PLAYER && game.activePlayer === index) {
       // Same player tap → stop player, start referee
       closeTurn();
+      endPlayerTurn(game.activePlayer);
       game.state = State.REFEREE;
       game.activePlayer = -1;
       game.referee.currentLapTime = 0;

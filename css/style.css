@@ -360,7 +360,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  opacity: 0;
+  opacity: 0.5;
   transition: opacity 0.3s;
 }
 .referee-bar.active .referee-section {
@@ -473,8 +473,9 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 
 .game-delay {
-  font-size: clamp(0.65rem, 2vw, 0.85rem);
-  color: var(--text-dim);
+  font-size: clamp(0.75rem, 2.5vw, 1rem);
+  color: #b0b8c4;
+  font-weight: 600;
   min-height: 1em;
 }
 
@@ -702,10 +703,10 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 /* === Mobile Compact (portrait phone) === */
 @media screen and (orientation: portrait) and (max-width: 600px) {
-  /* Global bar: move to CSS left (= physical top) to avoid Safari toolbar */
+  /* Global bar: keep right, adjust position */
   .global-bar {
-    right: auto;
-    left: 0.5rem;
+    top: 0.25rem;
+    right: 0.25rem;
   }
 
   /* Settings page compact */
