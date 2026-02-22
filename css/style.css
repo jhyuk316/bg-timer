@@ -446,18 +446,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   color: #fff;
 }
 
-.game-phase {
-  font-size: clamp(0.6rem, 2vw, 0.8rem);
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  min-height: 1em;
-}
-.player-area.in-reserve .game-phase {
-  color: #e0c850;
-}
-
-.game-reserve {
+.game-delay {
   font-size: clamp(0.65rem, 2vw, 0.85rem);
   color: var(--text-dim);
   min-height: 1em;

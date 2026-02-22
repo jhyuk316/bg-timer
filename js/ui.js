@@ -174,11 +174,11 @@ function renderSettingsPage2(container, settings, callbacks) {
   const detailCol = el('div', 'timer-detail-col');
 
   const timerValues = el('div', 'timer-values');
-  timerValues.appendChild(makeTimerInput('매 턴 제한 시간', settings.turnTime, 5, 300, '초', (v) => callbacks.setTimerValue('turnTime', v)));
-  timerValues.appendChild(makeTimerInput('예비 시간', Math.round(settings.reserveTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('reserveTime', v * 60)));
+  timerValues.appendChild(makeTimerInput('총 시간', Math.round(settings.reserveTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('reserveTime', v * 60)));
+  timerValues.appendChild(makeTimerInput('턴 딜레이', settings.turnTime, 5, 300, '초', (v) => callbacks.setTimerValue('turnTime', v)));
   timerValues.appendChild(makeTimerInput('초과 시 추가 시간', Math.round(settings.penaltyTime / 60), 1, 30, '분', (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
 
-  const hint = el('div', 'timer-hint', '예비시간 소진 → 패널티 + 추가시간 부여');
+  const hint = el('div', 'timer-hint', '총 시간 소진 → 패널티 + 추가시간 부여');
   timerValues.appendChild(hint);
 
   detailCol.appendChild(timerValues);
@@ -255,17 +255,13 @@ export function renderGameScreen(container, gameState, settings) {
 
     area.appendChild(el('div', 'game-player-name', p.name));
 
-    const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].turnTimeRemaining));
+    const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].reserveTimeRemaining));
     timerEl.id = `player-timer-${i}`;
     area.appendChild(timerEl);
 
-    const phaseEl = el('div', 'game-phase', '');
-    phaseEl.id = `player-phase-${i}`;
-    area.appendChild(phaseEl);
-
-    const reserveEl = el('div', 'game-reserve', `예비 ${formatTime(gameState.playerStates[i].reserveTimeRemaining)}`);
-    reserveEl.id = `player-reserve-${i}`;
-    area.appendChild(reserveEl);
+    const delayEl = el('div', 'game-delay', '');
+    delayEl.id = `player-delay-${i}`;
+    area.appendChild(delayEl);
 
     const penaltyEl = el('div', 'game-penalty', '');
     penaltyEl.id = `player-penalty-${i}`;
@@ -310,21 +306,13 @@ export function updateGameUI(gameState) {
 
     const timerEl = document.getElementById(`player-timer-${i}`);
     if (timerEl) {
-      timerEl.textContent = p.phase === 'turn'
-        ? formatTime(p.turnTimeRemaining)
-        : formatTime(p.reserveTimeRemaining);
+      timerEl.textContent = formatTime(p.reserveTimeRemaining);
     }
 
-    const phaseEl = document.getElementById(`player-phase-${i}`);
-    if (phaseEl) {
-      if (!isActive) phaseEl.textContent = '';
-      else phaseEl.textContent = p.phase === 'turn' ? '턴' : '예비';
-    }
-
-    const reserveEl = document.getElementById(`player-reserve-${i}`);
-    if (reserveEl) {
-      reserveEl.textContent = p.phase === 'turn'
-        ? `예비 ${formatTime(p.reserveTimeRemaining)}`
+    const delayEl = document.getElementById(`player-delay-${i}`);
+    if (delayEl) {
+      delayEl.textContent = (isActive && p.phase === 'turn')
+        ? `딜레이 ${formatTime(p.turnTimeRemaining)}`
         : '';
     }
 
