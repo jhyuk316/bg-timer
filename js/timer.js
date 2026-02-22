@@ -1,7 +1,7 @@
 const State = { IDLE: 'idle', PLAYER: 'player', REFEREE: 'referee' };
 
 export function createGame(settings) {
-  const { playerCount, players, turnTime, reserveTime, penaltyTime } = settings;
+  const { playerCount, players, turnTime, mainTime, penaltyTime } = settings;
 
   const playerStates = [];
   for (let i = 0; i < playerCount; i++) {
@@ -9,11 +9,11 @@ export function createGame(settings) {
       name: players[i].name,
       color: players[i].color,
       turnTimeRemaining: turnTime * 1000,
-      reserveTimeRemaining: reserveTime * 1000,
+      mainTimeRemaining: mainTime * 1000,
       penaltyCount: 0,
       totalTimeUsed: 0,
       turnCount: 0,
-      phase: 'turn', // 'turn' | 'reserve'
+      phase: 'turn', // 'turn' | 'main'
     });
   }
 
@@ -26,7 +26,7 @@ export function createGame(settings) {
     gameEndTime: null,
     lastTickTime: null,
     intervalId: null,
-    config: { turnTime: turnTime * 1000, reserveTime: reserveTime * 1000, penaltyTime: penaltyTime * 1000 },
+    config: { turnTime: turnTime * 1000, mainTime: mainTime * 1000, penaltyTime: penaltyTime * 1000 },
     turnLog: [],
     _tickCallbacks: [],
     _eventCallbacks: [],
@@ -66,28 +66,28 @@ export function createGame(settings) {
         if (p.turnTimeRemaining <= 0) {
           const overflow = -p.turnTimeRemaining;
           p.turnTimeRemaining = 0;
-          p.phase = 'reserve';
-          p.reserveTimeRemaining -= overflow;
-          emit('enterReserve', { player: game.activePlayer });
+          p.phase = 'main';
+          p.mainTimeRemaining -= overflow;
+          emit('enterMain', { player: game.activePlayer });
         }
       } else {
-        p.reserveTimeRemaining -= elapsed;
+        p.mainTimeRemaining -= elapsed;
 
         // TTS warning at 5 min remaining
-        if (!game._fiveMinWarned.has(game.activePlayer) && p.reserveTimeRemaining <= 5 * 60 * 1000 && p.reserveTimeRemaining > 0) {
+        if (!game._fiveMinWarned.has(game.activePlayer) && p.mainTimeRemaining <= 5 * 60 * 1000 && p.mainTimeRemaining > 0) {
           game._fiveMinWarned.add(game.activePlayer);
-          emit('reserveFiveMin', { player: game.activePlayer });
+          emit('mainFiveMin', { player: game.activePlayer });
         }
 
         // 30% warning
-        const threshold = game.config.reserveTime * 0.3;
-        if (p.reserveTimeRemaining <= threshold && p.reserveTimeRemaining + elapsed > threshold) {
-          emit('reserveWarning', { player: game.activePlayer });
+        const threshold = game.config.mainTime * 0.3;
+        if (p.mainTimeRemaining <= threshold && p.mainTimeRemaining + elapsed > threshold) {
+          emit('mainWarning', { player: game.activePlayer });
         }
 
-        if (p.reserveTimeRemaining <= 0) {
+        if (p.mainTimeRemaining <= 0) {
           p.penaltyCount++;
-          p.reserveTimeRemaining = game.config.penaltyTime + p.reserveTimeRemaining;
+          p.mainTimeRemaining = game.config.penaltyTime + p.mainTimeRemaining;
           emit('penalty', { player: game.activePlayer, count: p.penaltyCount });
         }
       }
@@ -194,7 +194,7 @@ export function createGame(settings) {
     game.referee = { currentLapTime: 0, totalTime: 0, turnCount: 0 };
     for (const p of game.playerStates) {
       p.turnTimeRemaining = game.config.turnTime;
-      p.reserveTimeRemaining = game.config.reserveTime;
+      p.mainTimeRemaining = game.config.mainTime;
       p.penaltyCount = 0;
       p.totalTimeUsed = 0;
       p.turnCount = 0;

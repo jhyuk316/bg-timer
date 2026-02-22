@@ -177,7 +177,7 @@ function renderSettingsPage2(container, settings, callbacks) {
   const detailCol = el('div', 'timer-detail-col');
 
   const timerValues = el('div', 'timer-values');
-  timerValues.appendChild(makeTimerInput('총 시간', Math.round(settings.reserveTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('reserveTime', v * 60)));
+  timerValues.appendChild(makeTimerInput('메인 시간', Math.round(settings.mainTime / 60), 1, 120, '분', (v) => callbacks.setTimerValue('mainTime', v * 60)));
   timerValues.appendChild(makeTimerInput('턴 딜레이', settings.turnTime, 5, 300, '초', (v) => callbacks.setTimerValue('turnTime', v)));
   timerValues.appendChild(makeTimerInput('초과 시 추가 시간', Math.round(settings.penaltyTime / 60), 1, 30, '분', (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
 
@@ -272,7 +272,7 @@ export function renderGameScreen(container, gameState, settings) {
 
     area.appendChild(el('div', 'game-player-name', p.name));
 
-    const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].reserveTimeRemaining));
+    const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].mainTimeRemaining));
     timerEl.id = `player-timer-${i}`;
     area.appendChild(timerEl);
 
@@ -328,11 +328,11 @@ export function updateGameUI(gameState) {
 
     const isActive = state === 'player' && activePlayer === i;
     area.classList.toggle('active', isActive);
-    area.classList.toggle('in-reserve', isActive && p.phase === 'reserve');
+    area.classList.toggle('in-main', isActive && p.phase === 'main');
 
     const timerEl = document.getElementById(`player-timer-${i}`);
     if (timerEl) {
-      timerEl.textContent = formatTime(p.reserveTimeRemaining);
+      timerEl.textContent = formatTime(p.mainTimeRemaining);
     }
 
     const delayEl = document.getElementById(`player-delay-${i}`);

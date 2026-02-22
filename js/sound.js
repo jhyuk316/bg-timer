@@ -32,7 +32,7 @@ export function playTurnWarning() {
   setTimeout(() => playTone(880, 0.3), 350);
 }
 
-export function playReserveWarning() {
+export function playMainWarning() {
   playTone(660, 0.2);
   setTimeout(() => playTone(880, 0.2), 250);
   setTimeout(() => playTone(1100, 0.3), 500);

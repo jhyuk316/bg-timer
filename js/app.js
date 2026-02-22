@@ -1,6 +1,6 @@
 import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
-import { initSound, setSoundEnabled, playTurnWarning, playReserveWarning, playPenaltyAlert, speakTTS } from './sound.js';
+import { initSound, setSoundEnabled, playTurnWarning, playMainWarning, playPenaltyAlert, speakTTS } from './sound.js';
 import { saveGame as saveHistory, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
 
@@ -74,7 +74,7 @@ function showSettings() {
       if (!p) return;
       settings.presetName = name;
       settings.turnTime = p.turnTime;
-      settings.reserveTime = p.reserveTime;
+      settings.mainTime = p.mainTime;
       settings.penaltyTime = p.penaltyTime;
       saveSettings(settings);
       showSettings();
@@ -112,7 +112,7 @@ function startNewGame() {
     playerCount: activePlayers.length,
     players: activePlayers,
     turnTime: settings.turnTime,
-    reserveTime: settings.reserveTime,
+    mainTime: settings.mainTime,
     penaltyTime: settings.penaltyTime,
   };
 
@@ -126,14 +126,14 @@ function startNewGame() {
 
   game.onEvent((event, data) => {
     switch (event) {
-      case 'enterReserve':
+      case 'enterMain':
         playTurnWarning();
         break;
-      case 'reserveFiveMin':
+      case 'mainFiveMin':
         speakTTS('5\uBD84 \uB0A8\uC558\uC2B5\uB2C8\uB2E4');
         break;
-      case 'reserveWarning':
-        playReserveWarning();
+      case 'mainWarning':
+        playMainWarning();
         break;
       case 'penalty':
         playPenaltyAlert();
@@ -347,7 +347,7 @@ function showStats() {
         timerConfig: {
           presetName: settings.presetName,
           turnTime: settings.turnTime,
-          reserveTime: settings.reserveTime,
+          mainTime: settings.mainTime,
           penaltyTime: settings.penaltyTime,
         },
         stats: lastStats,

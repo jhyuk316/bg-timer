@@ -47,11 +47,11 @@ export const COLOR_PRESETS = {
 };
 
 export const TIMER_PRESETS = {
-  'Light':       { turnTime: 10,  reserveTime: 10 * 60,  penaltyTime: 1 * 60, targetMin: 15  },
-  'Medium Light': { turnTime: 15,  reserveTime: 20 * 60,  penaltyTime: 2 * 60, targetMin: 30  },
-  'Medium':       { turnTime: 20,  reserveTime: 50 * 60,  penaltyTime: 3 * 60, targetMin: 60  },
-  'Medium Heavy': { turnTime: 30,  reserveTime: 75 * 60,  penaltyTime: 4 * 60, targetMin: 90  },
-  'Heavy':       { turnTime: 45,  reserveTime: 100 * 60, penaltyTime: 5 * 60, targetMin: 120 },
+  'Light':       { turnTime: 10,  mainTime: 10 * 60,  penaltyTime: 1 * 60, targetMin: 15  },
+  'Medium Light': { turnTime: 15,  mainTime: 20 * 60,  penaltyTime: 2 * 60, targetMin: 30  },
+  'Medium':       { turnTime: 20,  mainTime: 50 * 60,  penaltyTime: 3 * 60, targetMin: 60  },
+  'Medium Heavy': { turnTime: 30,  mainTime: 75 * 60,  penaltyTime: 4 * 60, targetMin: 90  },
+  'Heavy':       { turnTime: 45,  mainTime: 100 * 60, penaltyTime: 5 * 60, targetMin: 120 },
 };
 
 const SETTINGS_KEY = 'bg-timer-settings';
@@ -66,7 +66,7 @@ export function getDefaultSettings() {
     })),
     presetName: 'Medium',
     turnTime: 20,
-    reserveTime: 40 * 60,
+    mainTime: 40 * 60,
     penaltyTime: 5 * 60,
     soundEnabled: true,
   };
