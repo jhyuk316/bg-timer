@@ -271,11 +271,9 @@ export function renderGameScreen(container, gameState, settings) {
   const controls = el('div', 'game-controls');
   const pauseBtn = el('button', 'ctrl-btn', '⏸ 일시정지');
   pauseBtn.id = 'btn-pause';
-  const resetBtn = el('button', 'ctrl-btn ctrl-danger', '↺ 리셋');
-  resetBtn.id = 'btn-reset';
   const endBtn = el('button', 'ctrl-btn ctrl-end', '⏹ 게임 종료');
   endBtn.id = 'btn-end';
-  controls.append(pauseBtn, resetBtn, endBtn);
+  controls.append(pauseBtn, endBtn);
   container.appendChild(controls);
 }
 

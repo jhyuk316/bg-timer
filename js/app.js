@@ -208,14 +208,6 @@ function wireGameControls() {
     }
   });
 
-  // Reset
-  document.getElementById('btn-reset').addEventListener('click', () => {
-    if (confirm('\uAC8C\uC784\uC744 \uB9AC\uC14B\uD560\uAE4C\uC694?')) {
-      game.reset();
-      updateGameUI(game.getState());
-    }
-  });
-
   // End
   document.getElementById('btn-end').addEventListener('click', () => {
     if (confirm('\uAC8C\uC784\uC744 \uC885\uB8CC\uD560\uAE4C\uC694?')) {
