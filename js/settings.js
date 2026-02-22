@@ -37,11 +37,11 @@ export const COLOR_PRESETS = {
 };
 
 export const TIMER_PRESETS = {
-  Filler:  { turnTime: 20,  reserveTime: 5 * 60,  penaltyTime: 2 * 60  },
-  Light:   { turnTime: 30,  reserveTime: 15 * 60, penaltyTime: 3 * 60  },
-  Middle:  { turnTime: 45,  reserveTime: 30 * 60, penaltyTime: 5 * 60  },
-  Heavy:   { turnTime: 60,  reserveTime: 50 * 60, penaltyTime: 5 * 60  },
-  Epic:    { turnTime: 90,  reserveTime: 60 * 60, penaltyTime: 10 * 60 },
+  'Light':       { turnTime: 10,  reserveTime: 10 * 60,  penaltyTime: 1 * 60, targetMin: 15  },
+  'Med Light':   { turnTime: 15,  reserveTime: 20 * 60,  penaltyTime: 1 * 60, targetMin: 30  },
+  'Medium':      { turnTime: 20,  reserveTime: 50 * 60,  penaltyTime: 2 * 60, targetMin: 60  },
+  'Med Heavy':   { turnTime: 30,  reserveTime: 75 * 60,  penaltyTime: 3 * 60, targetMin: 90  },
+  'Heavy':       { turnTime: 45,  reserveTime: 100 * 60, penaltyTime: 5 * 60, targetMin: 120 },
 };
 
 const SETTINGS_KEY = 'bg-timer-settings';
@@ -54,9 +54,9 @@ export function getDefaultSettings() {
       name: `Player ${i + 1}`,
       color: COLOR_PALETTE[i].hex,
     })),
-    presetName: 'Middle',
-    turnTime: 45,
-    reserveTime: 30 * 60,
+    presetName: 'Medium',
+    turnTime: 20,
+    reserveTime: 40 * 60,
     penaltyTime: 5 * 60,
     soundEnabled: true,
   };

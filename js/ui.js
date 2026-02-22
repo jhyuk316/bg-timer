@@ -162,8 +162,10 @@ function renderSettingsPage2(container, settings, callbacks) {
 
   // Left: timer presets (vertical)
   const presetsCol = el('div', 'timer-presets-col');
-  for (const name of Object.keys(TIMER_PRESETS)) {
-    const btn = el('button', `preset-btn${name === settings.presetName ? ' active' : ''}`, name);
+  for (const [name, preset] of Object.entries(TIMER_PRESETS)) {
+    const btn = el('button', `preset-btn${name === settings.presetName ? ' active' : ''}`);
+    btn.appendChild(el('span', 'preset-name', name));
+    btn.appendChild(el('span', 'preset-time', `${preset.targetMin}m/p`));
     btn.addEventListener('click', () => callbacks.setPreset(name));
     presetsCol.appendChild(btn);
   }

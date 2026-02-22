@@ -244,9 +244,18 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 .timer-presets-col .preset-btn {
   width: 100%;
-  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.6rem 1rem;
 }
+.preset-name { text-align: left; }
+.preset-time {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+.preset-btn.active .preset-time { color: rgba(255,255,255,0.7); }
 .timer-detail-col .timer-values {
   margin-top: 0;
 }
