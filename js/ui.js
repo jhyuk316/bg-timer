@@ -462,14 +462,34 @@ function buildUnifiedStats(stats) {
   const hasGantt = turnLog && turnLog.length > 0 && totalMs > 0;
 
   const section = el('div', 'stats-unified');
+  const scrollWraps = [];
+  let zoom = 1;
 
-  // Header row: column labels + ticks
-  const headerRow = el('div', 'stats-unified-row is-header');
-  headerRow.appendChild(el('div', 'stats-unified-label'));
-  headerRow.appendChild(uniCell('시간', true));
-  headerRow.appendChild(uniCell('턴', true));
-  headerRow.appendChild(uniCell('패널티', true));
+  // Zoom controls
   if (hasGantt) {
+    const controls = el('div', 'gantt-controls');
+    const zoomOutBtn = el('button', 'gantt-zoom-btn', '−');
+    const zoomInBtn = el('button', 'gantt-zoom-btn', '+');
+    zoomOutBtn.disabled = true;
+
+    function setZoom(newZoom) {
+      zoom = Math.max(1, Math.min(5, newZoom));
+      section.querySelectorAll('.gantt-inner').forEach(inner => {
+        inner.style.width = `${zoom * 100}%`;
+      });
+      zoomOutBtn.disabled = (zoom <= 1);
+      zoomInBtn.disabled = (zoom >= 5);
+    }
+
+    zoomOutBtn.addEventListener('click', () => setZoom(zoom - 1));
+    zoomInBtn.addEventListener('click', () => setZoom(zoom + 1));
+    controls.append(zoomOutBtn, zoomInBtn);
+    section.appendChild(controls);
+
+    // Tick marks row (synced scroll, no scrollbar)
+    const ticksWrap = el('div', 'gantt-ticks-wrap gantt-scroll-wrap');
+    scrollWraps.push(ticksWrap);
+    const ticksInner = el('div', 'gantt-inner');
     const ticks = el('div', 'gantt-ticks');
     const intervalMin = totalMs <= 5 * 60000 ? 1 : totalMs <= 20 * 60000 ? 5 : 10;
     const intervalMs = intervalMin * 60000;
@@ -480,30 +500,40 @@ function buildUnifiedStats(stats) {
       tick.textContent = mins === 0 ? '0' : `${mins}m`;
       ticks.appendChild(tick);
     }
-    headerRow.appendChild(ticks);
+    ticksInner.appendChild(ticks);
+    ticksWrap.appendChild(ticksInner);
+    section.appendChild(ticksWrap);
   }
-  section.appendChild(headerRow);
 
-  // Player rows
+  // Player blocks (2 rows each: info + gantt)
   for (let i = 0; i < stats.players.length; i++) {
     const p = stats.players[i];
-    const row = el('div', 'stats-unified-row');
-    row.style.borderLeft = `3px solid ${p.color}`;
-    row.style.paddingLeft = '0.5rem';
+    const block = el('div', 'stats-player-block');
+    block.style.borderLeft = `3px solid ${p.color}`;
 
+    // Row 1: info
+    const infoRow = el('div', 'stats-info-row');
     const label = el('div', 'stats-unified-label');
     const meeple = el('span', 'stats-meeple');
     meeple.innerHTML = MEEPLE_SVG;
     meeple.style.color = p.color;
     label.appendChild(meeple);
     label.appendChild(el('span', 'stats-unified-name', p.name));
-    row.appendChild(label);
+    infoRow.appendChild(label);
 
-    row.appendChild(uniCell(formatTimeLong(p.totalTime)));
-    row.appendChild(uniCell(`${p.turnCount}턴`));
-    row.appendChild(uniCell(p.penaltyCount > 0 ? `${p.penaltyCount}회` : '-'));
+    const pct = Math.round(p.totalTime / totalMs * 100);
+    infoRow.appendChild(uniCell(`${formatTimeLong(p.totalTime)} (${pct}%)`));
+    infoRow.appendChild(uniCell(`${p.turnCount}턴`));
+    infoRow.appendChild(uniCell(
+      p.penaltyCount > 0 ? `${p.penaltyCount}회 (−${p.penaltyCount * 2}%)` : '-'
+    ));
+    block.appendChild(infoRow);
 
+    // Row 2: gantt
     if (hasGantt) {
+      const scrollWrap = el('div', 'gantt-scroll-wrap');
+      scrollWraps.push(scrollWrap);
+      const inner = el('div', 'gantt-inner');
       const timeline = el('div', 'gantt-timeline');
       for (const entry of turnLog) {
         if (entry.type === 'player' && entry.player === i && entry.endMs != null) {
@@ -514,26 +544,33 @@ function buildUnifiedStats(stats) {
           timeline.appendChild(bar);
         }
       }
-      row.appendChild(timeline);
+      inner.appendChild(timeline);
+      scrollWrap.appendChild(inner);
+      block.appendChild(scrollWrap);
     }
 
-    section.appendChild(row);
+    section.appendChild(block);
   }
 
-  // Referee row
-  const refRow = el('div', 'stats-unified-row');
-  refRow.style.borderLeft = '3px solid #888';
-  refRow.style.paddingLeft = '0.5rem';
+  // Referee block
+  const refBlock = el('div', 'stats-player-block');
+  refBlock.style.borderLeft = '3px solid #888';
 
+  const refInfoRow = el('div', 'stats-info-row');
   const refLabel = el('div', 'stats-unified-label');
   refLabel.appendChild(el('span', 'stats-unified-name', '⚖ 심판'));
-  refRow.appendChild(refLabel);
+  refInfoRow.appendChild(refLabel);
 
-  refRow.appendChild(uniCell(formatTimeLong(stats.referee.totalTime)));
-  refRow.appendChild(uniCell(`${stats.referee.turnCount}회`));
-  refRow.appendChild(uniCell('-'));
+  const refPct = Math.round(stats.referee.totalTime / totalMs * 100);
+  refInfoRow.appendChild(uniCell(`${formatTimeLong(stats.referee.totalTime)} (${refPct}%)`));
+  refInfoRow.appendChild(uniCell(`${stats.referee.turnCount}회`));
+  refInfoRow.appendChild(uniCell('-'));
+  refBlock.appendChild(refInfoRow);
 
   if (hasGantt) {
+    const refScrollWrap = el('div', 'gantt-scroll-wrap');
+    scrollWraps.push(refScrollWrap);
+    const refInner = el('div', 'gantt-inner');
     const refTimeline = el('div', 'gantt-timeline');
     for (const entry of turnLog) {
       if (entry.type === 'referee' && entry.endMs != null) {
@@ -544,15 +581,27 @@ function buildUnifiedStats(stats) {
         refTimeline.appendChild(bar);
       }
     }
-    refRow.appendChild(refTimeline);
+    refInner.appendChild(refTimeline);
+    refScrollWrap.appendChild(refInner);
+    refBlock.appendChild(refScrollWrap);
   }
 
-  section.appendChild(refRow);
+  section.appendChild(refBlock);
+
+  // Scroll sync
+  scrollWraps.forEach(wrap => {
+    wrap.addEventListener('scroll', () => {
+      scrollWraps.forEach(other => {
+        if (other !== wrap) other.scrollLeft = wrap.scrollLeft;
+      });
+    });
+  });
+
   return section;
 }
 
-function uniCell(text, isHeader = false) {
-  const cell = el('div', `stats-unified-cell${isHeader ? ' is-header' : ''}`);
+function uniCell(text) {
+  const cell = el('div', 'stats-unified-cell');
   cell.textContent = text;
   return cell;
 }
