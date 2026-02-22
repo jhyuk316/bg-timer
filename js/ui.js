@@ -123,6 +123,9 @@ function renderSettingsPage1(container, settings, callbacks) {
     btn.addEventListener('click', () => callbacks.applyColorPreset(name));
     presetColorRow.appendChild(btn);
   }
+  const noneBtn = el('button', 'preset-color-btn', 'None');
+  noneBtn.addEventListener('click', () => callbacks.clearAllMeeples());
+  presetColorRow.appendChild(noneBtn);
   wrap.appendChild(presetColorRow);
 
   // Nav buttons

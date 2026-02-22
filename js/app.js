@@ -59,6 +59,12 @@ function showSettings() {
       saveSettings(settings);
       showSettings();
     },
+    clearAllMeeples() {
+      settings.activeMeeples = new Array(10).fill(false);
+      settings.playerCount = 0;
+      saveSettings(settings);
+      showSettings();
+    },
     goToPage2() {
       const activeCount = settings.activeMeeples.filter(Boolean).length;
       if (activeCount === 0) return 'empty';
