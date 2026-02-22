@@ -272,6 +272,8 @@ button:disabled { opacity: 0.4; cursor: default; }
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  overflow-y: auto;
+  min-height: 0;
 }
 .timer-presets-col .preset-btn {
   width: 100%;
@@ -543,7 +545,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 /* === Stats Screen === */
 .stats-wrap {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   padding: 1rem 2.5rem 2rem 1.5rem;
   width: 100%;
 }
@@ -568,7 +570,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   border-radius: var(--radius);
   padding: 0.75rem;
   margin-bottom: 1rem;
-  overflow: hidden;
+  overflow: visible;
 }
 .stats-player-block {
   padding: 0.4rem 0 0.4rem 0.5rem;

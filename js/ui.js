@@ -323,7 +323,7 @@ export function updateGameUI(gameState) {
   const refTime = document.getElementById('referee-time');
   if (refBar) {
     refBar.classList.toggle('active', state === 'referee');
-    if (refTime) refTime.textContent = formatTime(referee.currentLapTime);
+    if (refTime) refTime.textContent = formatTime(referee.totalTime);
   }
 
   // Total active time (center)
