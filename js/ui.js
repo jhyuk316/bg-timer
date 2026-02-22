@@ -1,5 +1,7 @@
 import { COLOR_PALETTE, COLOR_PRESETS, TIMER_PRESETS } from './settings.js';
 
+const REFEREE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M32 0C14.3 0 0 14.3 0 32S14.3 64 32 64V75c0 42.4 16.9 83.1 46.9 113.1L146.7 256 78.9 323.9C48.9 353.9 32 394.6 32 437v11c-17.7 0-32 14.3-32 32s14.3 32 32 32H64 320h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V437c0-42.4-16.9-83.1-46.9-113.1L237.3 256l67.9-67.9c30-30 46.9-70.7 46.9-113.1V64c17.7 0 32-14.3 32-32s-14.3-32-32-32H320 64 32zM96 75V64H288V75c0 19-5.6 37.4-16 53H112c-10.3-15.6-16-34-16-53zm16 309c3.5-5.3 7.6-10.3 12.1-14.9L192 301.3l67.9 67.9c4.6 4.6 8.6 9.6 12.2 14.9H112z"/></svg>`;
+
 const MEEPLE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M256 54.99c-27 0-46.418 14.287-57.633 32.23-10.03 16.047-14.203 34.66-15.017 50.962-30.608 15.135-64.515 30.394-91.815 45.994-14.32 8.183-26.805 16.414-36.203 25.26C45.934 218.28 39 228.24 39 239.99c0 5 2.44 9.075 5.19 12.065 2.754 2.99 6.054 5.312 9.812 7.48 7.515 4.336 16.99 7.95 27.412 11.076 15.483 4.646 32.823 8.1 47.9 9.577-14.996 25.84-34.953 49.574-52.447 72.315C56.65 378.785 39 403.99 39 431.99c0 4-.044 7.123.31 10.26.355 3.137 1.256 7.053 4.41 10.156 3.155 3.104 7.017 3.938 10.163 4.28 3.146.345 6.315.304 10.38.304h111.542c8.097 0 14.026.492 20.125-3.43 6.1-3.92 8.324-9.275 12.67-17.275l.088-.16.08-.166s9.723-19.77 21.324-39.388c5.8-9.808 12.097-19.576 17.574-26.498 2.74-3.46 5.304-6.204 7.15-7.754.564-.472.82-.56 1.184-.76.363.2.62.288 1.184.76 1.846 1.55 4.41 4.294 7.15 7.754 5.477 6.922 11.774 16.69 17.574 26.498 11.6 19.618 21.324 39.387 21.324 39.387l.08.165.088.16c4.346 8 6.55 13.323 12.61 17.254 6.058 3.93 11.974 3.45 19.957 3.45H448c4 0 7.12.043 10.244-.304 3.123-.347 6.998-1.21 10.12-4.332 3.12-3.122 3.984-6.997 4.33-10.12.348-3.122.306-6.244.306-10.244 0-28-17.65-53.205-37.867-79.488-17.493-22.74-37.45-46.474-52.447-72.315 15.077-1.478 32.417-4.93 47.9-9.576 10.422-3.125 19.897-6.74 27.412-11.075 3.758-2.168 7.058-4.49 9.81-7.48 2.753-2.99 5.192-7.065 5.192-12.065 0-11.75-6.934-21.71-16.332-30.554-9.398-8.846-21.883-17.077-36.203-25.26-27.3-15.6-61.207-30.86-91.815-45.994-.814-16.3-4.988-34.915-15.017-50.96C302.418 69.276 283 54.99 256 54.99z"/></svg>`;
 
 // --- Global Bar (sound + fullscreen icons) ---
@@ -93,6 +95,7 @@ function renderSettingsPage1(container, settings, callbacks) {
     if (isActive) {
       const nameInput = el('input', 'meeple-name');
       nameInput.type = 'text';
+      nameInput.maxLength = 10;
       nameInput.value = settings.players[i].name;
       nameInput.placeholder = color.name;
       nameInput.addEventListener('click', (e) => e.stopPropagation());
@@ -233,7 +236,9 @@ export function renderGameScreen(container, gameState, settings) {
 
   // Left: referee section (visible only when referee active)
   const refSection = el('div', 'referee-section');
-  refSection.append(el('span', 'referee-icon', '⚖'), el('span', 'referee-label', '심판'));
+  const refIconGame = el('span', 'referee-icon');
+  refIconGame.innerHTML = REFEREE_SVG;
+  refSection.append(refIconGame, el('span', 'referee-label', '심판'));
   const refTime = el('span', 'referee-time', '0:00');
   refTime.id = 'referee-time';
   refSection.appendChild(refTime);
@@ -522,9 +527,9 @@ function buildUnifiedStats(stats) {
     infoRow.appendChild(label);
 
     const pct = Math.round(p.totalTime / totalMs * 100);
-    infoRow.appendChild(uniCell(`${formatTimeLong(p.totalTime)} (${pct}%)`));
-    infoRow.appendChild(uniCell(`${p.turnCount}턴`));
-    infoRow.appendChild(uniCell(
+    infoRow.appendChild(uniCell('시간', `${formatTimeLong(p.totalTime)} (${pct}%)`));
+    infoRow.appendChild(uniCell('턴', `${p.turnCount}턴`));
+    infoRow.appendChild(uniCell('패널티',
       p.penaltyCount > 0 ? `${p.penaltyCount}회 (−${p.penaltyCount * 2}%)` : '-'
     ));
     block.appendChild(infoRow);
@@ -558,13 +563,16 @@ function buildUnifiedStats(stats) {
 
   const refInfoRow = el('div', 'stats-info-row');
   const refLabel = el('div', 'stats-unified-label');
-  refLabel.appendChild(el('span', 'stats-unified-name', '⚖ 심판'));
+  const refIcon = el('span', 'stats-meeple');
+  refIcon.innerHTML = REFEREE_SVG;
+  refLabel.appendChild(refIcon);
+  refLabel.appendChild(el('span', 'stats-unified-name', '심판'));
   refInfoRow.appendChild(refLabel);
 
   const refPct = Math.round(stats.referee.totalTime / totalMs * 100);
-  refInfoRow.appendChild(uniCell(`${formatTimeLong(stats.referee.totalTime)} (${refPct}%)`));
-  refInfoRow.appendChild(uniCell(`${stats.referee.turnCount}회`));
-  refInfoRow.appendChild(uniCell('-'));
+  refInfoRow.appendChild(uniCell('시간', `${formatTimeLong(stats.referee.totalTime)} (${refPct}%)`));
+  refInfoRow.appendChild(uniCell('횟수', `${stats.referee.turnCount}회`));
+  refInfoRow.appendChild(uniCell('패널티', '-'));
   refBlock.appendChild(refInfoRow);
 
   if (hasGantt) {
@@ -600,9 +608,11 @@ function buildUnifiedStats(stats) {
   return section;
 }
 
-function uniCell(text) {
+function uniCell(label, value) {
   const cell = el('div', 'stats-unified-cell');
-  cell.textContent = text;
+  const labelSpan = el('span', 'stats-cell-label', label);
+  cell.appendChild(labelSpan);
+  cell.appendChild(document.createTextNode(value));
   return cell;
 }
 
