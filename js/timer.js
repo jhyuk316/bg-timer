@@ -1,7 +1,7 @@
 const State = { IDLE: 'idle', PLAYER: 'player', REFEREE: 'referee' };
 
 export function createGame(settings) {
-  const { playerCount, players, turnTime, reserveTime, penaltyTime, carryOverTurnTime } = settings;
+  const { playerCount, players, turnTime, reserveTime, penaltyTime } = settings;
 
   const playerStates = [];
   for (let i = 0; i < playerCount; i++) {
@@ -26,7 +26,7 @@ export function createGame(settings) {
     gameEndTime: null,
     lastTickTime: null,
     intervalId: null,
-    config: { turnTime: turnTime * 1000, reserveTime: reserveTime * 1000, penaltyTime: penaltyTime * 1000, carryOverTurnTime },
+    config: { turnTime: turnTime * 1000, reserveTime: reserveTime * 1000, penaltyTime: penaltyTime * 1000 },
     turnLog: [],
     _tickCallbacks: [],
     _eventCallbacks: [],
@@ -157,9 +157,6 @@ export function createGame(settings) {
 
   function endPlayerTurn(index) {
     const p = game.playerStates[index];
-    if (game.config.carryOverTurnTime && p.phase === 'turn') {
-      p.reserveTimeRemaining += p.turnTimeRemaining;
-    }
     p.turnTimeRemaining = game.config.turnTime;
     p.phase = 'turn';
   }

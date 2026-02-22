@@ -79,11 +79,6 @@ function showSettings() {
       settings.presetName = '';
       saveSettings(settings);
     },
-    toggleCarryOver() {
-      settings.carryOverTurnTime = !settings.carryOverTurnTime;
-      saveSettings(settings);
-      showSettings();
-    },
     toggleSound() {
       settings.soundEnabled = !settings.soundEnabled;
       setSoundEnabled(settings.soundEnabled);
@@ -119,7 +114,6 @@ function startNewGame() {
     turnTime: settings.turnTime,
     reserveTime: settings.reserveTime,
     penaltyTime: settings.penaltyTime,
-    carryOverTurnTime: settings.carryOverTurnTime,
   };
 
   game = createGame(gameSettings);

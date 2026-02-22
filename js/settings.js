@@ -58,7 +58,6 @@ export function getDefaultSettings() {
     turnTime: 45,
     reserveTime: 30 * 60,
     penaltyTime: 5 * 60,
-    carryOverTurnTime: false,
     soundEnabled: true,
   };
 }

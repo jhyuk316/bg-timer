@@ -32,43 +32,13 @@ export function renderSettingsScreen(container, settings, page, callbacks) {
   }
 }
 
-function renderPageIndicator(page) {
-  const indicator = el('div', 'page-indicator');
-
-  const step1 = el('div', `page-step${page === 1 ? ' active' : ''}`);
-  step1.textContent = '1. 플레이어';
-  indicator.appendChild(step1);
-
-  const dot = el('span', 'page-dot', '—');
-  indicator.appendChild(dot);
-
-  const step2 = el('div', `page-step${page === 2 ? ' active' : ''}`);
-  step2.textContent = '2. 타이머';
-  indicator.appendChild(step2);
-
-  return indicator;
-}
-
 function renderSettingsPage1(container, settings, callbacks) {
   container.innerHTML = '';
 
   const wrap = el('div', 'settings-wrap');
   wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
-  wrap.appendChild(renderPageIndicator(1));
 
-  // Color presets section
-  const presetSection = el('div', 'settings-section');
-  presetSection.appendChild(el('label', 'settings-label', '색상 프리셋'));
-  const presetColorRow = el('div', 'preset-color-row');
-  for (const [name] of Object.entries(COLOR_PRESETS)) {
-    const btn = el('button', 'preset-color-btn', name);
-    btn.addEventListener('click', () => callbacks.applyColorPreset(name));
-    presetColorRow.appendChild(btn);
-  }
-  presetSection.appendChild(presetColorRow);
-  wrap.appendChild(presetSection);
-
-  // Meeple selection section
+  // Meeple selection section (hero)
   const meepleSection = el('div', 'settings-section');
   meepleSection.appendChild(el('label', 'settings-label', '플레이어 선택'));
 
@@ -113,6 +83,15 @@ function renderSettingsPage1(container, settings, callbacks) {
 
   wrap.appendChild(meepleSection);
 
+  // Color presets section (auxiliary)
+  const presetColorRow = el('div', 'preset-color-row');
+  for (const [name] of Object.entries(COLOR_PRESETS)) {
+    const btn = el('button', 'preset-color-btn', name);
+    btn.addEventListener('click', () => callbacks.applyColorPreset(name));
+    presetColorRow.appendChild(btn);
+  }
+  wrap.appendChild(presetColorRow);
+
   // Nav buttons
   const nav = el('div', 'settings-nav');
   const historyBtn = el('button', 'btn-secondary', '히스토리');
@@ -146,45 +125,37 @@ function renderSettingsPage2(container, settings, callbacks) {
 
   const wrap = el('div', 'settings-wrap');
   wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
-  wrap.appendChild(renderPageIndicator(2));
 
-  // Timer section
-  const timerSection = el('div', 'settings-section');
-  timerSection.appendChild(el('label', 'settings-label', '타이머 프리셋'));
-  const presetRow = el('div', 'preset-row');
+  // 2-column timer layout
+  const timerLayout = el('div', 'timer-layout');
+
+  // Left: timer presets (vertical)
+  const presetsCol = el('div', 'timer-presets-col');
   for (const name of Object.keys(TIMER_PRESETS)) {
     const btn = el('button', `preset-btn${name === settings.presetName ? ' active' : ''}`, name);
     btn.addEventListener('click', () => callbacks.setPreset(name));
-    presetRow.appendChild(btn);
+    presetsCol.appendChild(btn);
   }
-  timerSection.appendChild(presetRow);
+  timerLayout.appendChild(presetsCol);
+
+  // Right: timer details + sound toggle
+  const detailCol = el('div', 'timer-detail-col');
 
   const timerValues = el('div', 'timer-values');
   timerValues.appendChild(makeTimerInput('턴 시간 (초)', settings.turnTime, 5, 300, (v) => callbacks.setTimerValue('turnTime', v)));
   timerValues.appendChild(makeTimerInput('예비시간 (분)', Math.round(settings.reserveTime / 60), 1, 120, (v) => callbacks.setTimerValue('reserveTime', v * 60)));
   timerValues.appendChild(makeTimerInput('패널티 추가 (분)', Math.round(settings.penaltyTime / 60), 1, 30, (v) => callbacks.setTimerValue('penaltyTime', v * 60)));
-  timerSection.appendChild(timerValues);
-
-  // Options
-  const optSection = el('div', 'settings-section');
-  optSection.appendChild(el('label', 'settings-label', '옵션'));
-
-  const carryRow = el('div', 'toggle-row');
-  carryRow.appendChild(el('span', '', '남은 턴 시간 → 예비시간 합산'));
-  const carryToggle = el('button', `toggle-btn${settings.carryOverTurnTime ? ' active' : ''}`, settings.carryOverTurnTime ? 'ON' : 'OFF');
-  carryToggle.addEventListener('click', () => callbacks.toggleCarryOver());
-  carryRow.appendChild(carryToggle);
-  optSection.appendChild(carryRow);
+  detailCol.appendChild(timerValues);
 
   const soundRow = el('div', 'toggle-row');
   soundRow.appendChild(el('span', '', '사운드'));
   const soundToggle = el('button', `toggle-btn${settings.soundEnabled ? ' active' : ''}`, settings.soundEnabled ? 'ON' : 'OFF');
   soundToggle.addEventListener('click', () => callbacks.toggleSound());
   soundRow.appendChild(soundToggle);
-  optSection.appendChild(soundRow);
+  detailCol.appendChild(soundRow);
 
-  wrap.appendChild(timerSection);
-  wrap.appendChild(optSection);
+  timerLayout.appendChild(detailCol);
+  wrap.appendChild(timerLayout);
 
   // Nav buttons
   const nav = el('div', 'settings-nav');

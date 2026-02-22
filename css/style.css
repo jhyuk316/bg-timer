@@ -113,30 +113,6 @@ button:disabled { opacity: 0.4; cursor: default; }
   letter-spacing: 0.06em;
 }
 
-/* Page indicator */
-.page-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.page-step {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  padding: 0.3rem 0.75rem;
-  border-radius: 6px;
-}
-.page-step.active {
-  background: var(--surface2);
-  color: var(--text);
-  font-weight: 600;
-}
-.page-dot {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-}
-
 /* Meeple grid */
 .meeple-grid {
   display: flex;
@@ -152,7 +128,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   padding: 0.4rem;
   border-radius: var(--radius);
   transition: opacity 0.2s, transform 0.2s;
-  width: 72px;
+  width: 84px;
 }
 .meeple-slot.dimmed {
   opacity: 0.25;
@@ -160,11 +136,11 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 .meeple-slot.active {
   opacity: 1;
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 .meeple-slot .meeple-icon {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   transition: transform 0.15s, filter 0.15s;
 }
 .meeple-slot.active .meeple-icon {
@@ -181,7 +157,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   border-radius: 4px;
   padding: 0.2rem 0.3rem;
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-align: center;
   outline: none;
   margin-top: 0.25rem;
@@ -214,13 +190,16 @@ button:disabled { opacity: 0.4; cursor: default; }
 .settings-nav .btn-primary { flex: 1; }
 .settings-nav .btn-secondary { flex: 0 0 auto; }
 
-/* Color presets */
+/* Color presets (auxiliary) */
 .preset-color-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
-  margin-bottom: 0.75rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--surface2);
 }
 .preset-color-btn {
   font-size: 0.75rem;
@@ -229,15 +208,29 @@ button:disabled { opacity: 0.4; cursor: default; }
   border-radius: 6px;
 }
 
-/* Timer presets */
-.preset-row {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+/* Timer 2-column layout */
+.timer-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
+.timer-presets-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.timer-presets-col .preset-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 1rem;
+}
+.timer-detail-col .timer-values {
+  margin-top: 0;
+}
+
+/* Timer presets */
 .preset-btn {
-  flex: 1;
-  min-width: 60px;
   padding: 0.5rem 0.3rem;
   font-size: 0.85rem;
   background: var(--surface);
