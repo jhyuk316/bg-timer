@@ -365,7 +365,7 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   // Unified stats + gantt
   wrap.appendChild(buildUnifiedStats(stats));
 
-  // Save row: [input] [저장] [새 게임]
+  // Save row: [input] [저장 & 새 게임]
   const saveRow = el('div', 'stats-save-row');
   const nameInput = el('input', 'stats-name-input');
   nameInput.type = 'text';
@@ -381,14 +381,12 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
     datalist.appendChild(opt);
   }
 
-  const saveBtn = el('button', 'btn-primary', '저장');
+  const saveBtn = el('button', 'btn-primary', '저장 & 새 게임');
   saveBtn.addEventListener('click', () => {
     const name = document.getElementById('game-name-input').value.trim();
     callbacks.save(name);
   });
-  const newBtn = el('button', 'btn-secondary', '새 게임');
-  newBtn.addEventListener('click', callbacks.newGame);
-  saveRow.append(nameInput, datalist, saveBtn, newBtn);
+  saveRow.append(nameInput, datalist, saveBtn);
   wrap.appendChild(saveRow);
 
   container.appendChild(wrap);
