@@ -38,9 +38,9 @@ export const COLOR_PRESETS = {
 
 export const TIMER_PRESETS = {
   'Light':       { turnTime: 10,  reserveTime: 10 * 60,  penaltyTime: 1 * 60, targetMin: 15  },
-  'Med Light':   { turnTime: 15,  reserveTime: 20 * 60,  penaltyTime: 1 * 60, targetMin: 30  },
-  'Medium':      { turnTime: 20,  reserveTime: 50 * 60,  penaltyTime: 2 * 60, targetMin: 60  },
-  'Med Heavy':   { turnTime: 30,  reserveTime: 75 * 60,  penaltyTime: 3 * 60, targetMin: 90  },
+  'Med Light':   { turnTime: 15,  reserveTime: 20 * 60,  penaltyTime: 2 * 60, targetMin: 30  },
+  'Medium':      { turnTime: 20,  reserveTime: 50 * 60,  penaltyTime: 3 * 60, targetMin: 60  },
+  'Med Heavy':   { turnTime: 30,  reserveTime: 75 * 60,  penaltyTime: 4 * 60, targetMin: 90  },
   'Heavy':       { turnTime: 45,  reserveTime: 100 * 60, penaltyTime: 5 * 60, targetMin: 120 },
 };
 
