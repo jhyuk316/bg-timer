@@ -80,7 +80,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem 1rem 2rem;
-  max-width: 480px;
+  max-width: 600px;
   margin: 0 auto;
   width: 100%;
 }
@@ -442,97 +442,76 @@ button:disabled { opacity: 0.4; cursor: default; }
 .stats-wrap {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 1rem 2rem;
-  max-width: 480px;
-  margin: 0 auto;
+  padding: 1rem 1.5rem 2rem;
   width: 100%;
 }
+.stats-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
 .stats-title {
-  text-align: center;
   font-size: 1.3rem;
-  margin-bottom: 1rem;
 }
-.stats-total {
-  text-align: center;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-.stats-total-label {
-  font-size: 0.8rem;
+.stats-total-inline {
+  font-size: 0.9rem;
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.25rem;
-}
-.stats-total-time {
-  font-size: 1.5rem;
-  font-weight: 700;
 }
 
-/* Player stat cards */
-.stats-players {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.stats-player-card {
+/* Unified stats + gantt */
+.stats-unified {
   background: var(--surface);
   border-radius: var(--radius);
   padding: 0.75rem;
-  border-left: 4px solid var(--player-color);
+  margin-bottom: 1rem;
+  overflow-x: auto;
 }
-.stats-player-header {
+.stats-unified-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.stats-unified-row:last-child { border-bottom: none; }
+.stats-unified-row.is-header {
+  border-bottom: 1px solid var(--surface2);
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
+}
+.stats-unified-label {
+  width: 100px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.stats-unified-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stats-meeple {
   width: 22px;
   height: 22px;
   display: inline-flex;
+  flex-shrink: 0;
 }
 .stats-meeple svg { width: 100%; height: 100%; }
-.stats-player-name {
-  font-weight: 600;
-  font-size: 0.95rem;
+.stats-unified-cell {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
 }
-
-.stats-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-.stat-label {
-  font-size: 0.7rem;
+.stats-unified-cell.is-header {
+  font-size: 0.65rem;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-.stat-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-/* Referee stats */
-.stats-referee {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-}
-.stats-referee-title {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  margin-bottom: 0.5rem;
 }
 
 /* Save section */
@@ -568,9 +547,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .history-wrap {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
-  max-width: 480px;
-  margin: 0 auto;
+  padding: 1rem 1.5rem;
   width: 100%;
 }
 .history-header {
@@ -626,25 +603,12 @@ button:disabled { opacity: 0.4; cursor: default; }
   margin-left: 0.5rem;
 }
 
-/* === Gantt Chart === */
-.gantt-chart {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-}
-.gantt-title {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  margin-bottom: 0.5rem;
-}
+/* === Gantt (inline in unified stats) === */
 .gantt-ticks {
+  flex: 1;
   position: relative;
   height: 1.2rem;
-  margin-left: 80px;
-  margin-bottom: 0.25rem;
-  border-bottom: 1px solid var(--surface2);
+  min-width: 100px;
 }
 .gantt-tick {
   position: absolute;
@@ -663,35 +627,14 @@ button:disabled { opacity: 0.4; cursor: default; }
   height: 4px;
   background: var(--text-dim);
 }
-.gantt-row {
-  display: flex;
-  align-items: center;
-  height: 1.5rem;
-  margin-bottom: 2px;
-}
-.gantt-label {
-  width: 80px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.gantt-label .stats-meeple {
-  width: 14px;
-  height: 14px;
-}
 .gantt-timeline {
   flex: 1;
   position: relative;
-  height: 100%;
+  height: 1.2rem;
   background: var(--bg);
   border-radius: 3px;
   overflow: hidden;
+  min-width: 100px;
 }
 .gantt-bar {
   position: absolute;

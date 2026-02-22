@@ -320,50 +320,14 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   container.innerHTML = '';
   const wrap = el('div', 'stats-wrap');
 
-  wrap.appendChild(el('h2', 'stats-title', '게임 결과'));
+  // Compact header with total time
+  const header = el('div', 'stats-header');
+  header.appendChild(el('h2', 'stats-title', '게임 결과'));
+  header.appendChild(el('span', 'stats-total-inline', `전체 ${formatTimeLong(stats.totalPlayTime)}`));
+  wrap.appendChild(header);
 
-  // Total play time
-  const totalCard = el('div', 'stats-total');
-  totalCard.appendChild(el('div', 'stats-total-label', '전체 플레이 타임'));
-  totalCard.appendChild(el('div', 'stats-total-time', formatTimeLong(stats.totalPlayTime)));
-  wrap.appendChild(totalCard);
-
-  // Player stats
-  const playerCards = el('div', 'stats-players');
-  for (const p of stats.players) {
-    const card = el('div', 'stats-player-card');
-    card.style.setProperty('--player-color', p.color);
-
-    const header = el('div', 'stats-player-header');
-    const meeple = el('span', 'stats-meeple');
-    meeple.innerHTML = MEEPLE_SVG;
-    meeple.style.color = p.color;
-    header.appendChild(meeple);
-    header.appendChild(el('span', 'stats-player-name', p.name));
-    card.appendChild(header);
-
-    const grid = el('div', 'stats-detail-grid');
-    grid.appendChild(statItem('소요 시간', formatTimeLong(p.totalTime)));
-    grid.appendChild(statItem('턴 수', `${p.turnCount}턴`));
-    grid.appendChild(statItem('패널티', p.penaltyCount > 0 ? `${p.penaltyCount}회 (−${p.penaltyCount * 2}%)` : '없음'));
-    card.appendChild(grid);
-
-    playerCards.appendChild(card);
-  }
-  wrap.appendChild(playerCards);
-
-  // Referee stats
-  const refCard = el('div', 'stats-referee');
-  refCard.appendChild(el('div', 'stats-referee-title', '심판 (공백시간)'));
-  const refGrid = el('div', 'stats-detail-grid');
-  refGrid.appendChild(statItem('총 시간', formatTimeLong(stats.referee.totalTime)));
-  refGrid.appendChild(statItem('횟수', `${stats.referee.turnCount}회`));
-  refCard.appendChild(refGrid);
-  wrap.appendChild(refCard);
-
-  // Gantt chart
-  const gantt = buildGanttChart(stats);
-  if (gantt) wrap.appendChild(gantt);
+  // Unified stats + gantt
+  wrap.appendChild(buildUnifiedStats(stats));
 
   // Game name input
   const saveSection = el('div', 'stats-save');
@@ -447,132 +411,125 @@ export function renderHistoryDetail(container, game, callbacks) {
   container.innerHTML = '';
   const wrap = el('div', 'stats-wrap');
 
-  const header = el('div', 'history-header');
+  const hdr = el('div', 'history-header');
   const backBtn = el('button', 'btn-back', '← 히스토리');
   backBtn.addEventListener('click', callbacks.back);
-  header.appendChild(backBtn);
-  header.appendChild(el('h2', 'stats-title', game.gameName));
-  wrap.appendChild(header);
+  hdr.appendChild(backBtn);
+  hdr.appendChild(el('h2', 'stats-title', game.gameName));
+  wrap.appendChild(hdr);
 
   const dateStr = new Date(game.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  wrap.appendChild(el('div', 'history-date', dateStr));
+  const dateLine = el('div', 'history-date');
+  dateLine.textContent = `${dateStr}  ·  전체 ${formatTimeLong(game.stats.totalPlayTime)}`;
+  wrap.appendChild(dateLine);
 
-  // Reuse stats display
-  const totalCard = el('div', 'stats-total');
-  totalCard.appendChild(el('div', 'stats-total-label', '전체 플레이 타임'));
-  totalCard.appendChild(el('div', 'stats-total-time', formatTimeLong(game.stats.totalPlayTime)));
-  wrap.appendChild(totalCard);
-
-  const playerCards = el('div', 'stats-players');
-  for (const p of game.stats.players) {
-    const card = el('div', 'stats-player-card');
-    card.style.setProperty('--player-color', p.color);
-
-    const hdr = el('div', 'stats-player-header');
-    const meeple = el('span', 'stats-meeple');
-    meeple.innerHTML = MEEPLE_SVG;
-    meeple.style.color = p.color;
-    hdr.appendChild(meeple);
-    hdr.appendChild(el('span', 'stats-player-name', p.name));
-    card.appendChild(hdr);
-
-    const grid = el('div', 'stats-detail-grid');
-    grid.appendChild(statItem('소요 시간', formatTimeLong(p.totalTime)));
-    grid.appendChild(statItem('턴 수', `${p.turnCount}턴`));
-    grid.appendChild(statItem('패널티', p.penaltyCount > 0 ? `${p.penaltyCount}회 (−${p.penaltyCount * 2}%)` : '없음'));
-    card.appendChild(grid);
-
-    playerCards.appendChild(card);
-  }
-  wrap.appendChild(playerCards);
-
-  const refCard = el('div', 'stats-referee');
-  refCard.appendChild(el('div', 'stats-referee-title', '심판 (공백시간)'));
-  const refGrid = el('div', 'stats-detail-grid');
-  refGrid.appendChild(statItem('총 시간', formatTimeLong(game.stats.referee.totalTime)));
-  refGrid.appendChild(statItem('횟수', `${game.stats.referee.turnCount}회`));
-  refCard.appendChild(refGrid);
-  wrap.appendChild(refCard);
-
-  // Gantt chart
-  const gantt2 = buildGanttChart(game.stats);
-  if (gantt2) wrap.appendChild(gantt2);
+  // Unified stats + gantt
+  wrap.appendChild(buildUnifiedStats(game.stats));
 
   container.appendChild(wrap);
 }
 
-// --- Gantt Chart ---
+// --- Unified Stats + Gantt ---
 
-function buildGanttChart(stats) {
+function buildUnifiedStats(stats) {
   const turnLog = stats.turnLog;
-  if (!turnLog || turnLog.length === 0) return null;
-
   const totalMs = stats.totalPlayTime;
-  if (totalMs <= 0) return null;
+  const hasGantt = turnLog && turnLog.length > 0 && totalMs > 0;
 
-  const chart = el('div', 'gantt-chart');
-  chart.appendChild(el('div', 'gantt-title', '턴 타임라인'));
+  const section = el('div', 'stats-unified');
 
-  // Time ticks
-  const ticks = el('div', 'gantt-ticks');
-  const intervalMin = totalMs <= 5 * 60000 ? 1 : totalMs <= 20 * 60000 ? 5 : 10;
-  const intervalMs = intervalMin * 60000;
-  for (let t = 0; t <= totalMs; t += intervalMs) {
-    const tick = el('div', 'gantt-tick');
-    tick.style.left = `${(t / totalMs) * 100}%`;
-    const mins = Math.round(t / 60000);
-    tick.textContent = mins === 0 ? '0' : `${mins}m`;
-    ticks.appendChild(tick);
+  // Header row: column labels + ticks
+  const headerRow = el('div', 'stats-unified-row is-header');
+  headerRow.appendChild(el('div', 'stats-unified-label'));
+  headerRow.appendChild(uniCell('시간', true));
+  headerRow.appendChild(uniCell('턴', true));
+  headerRow.appendChild(uniCell('패널티', true));
+  if (hasGantt) {
+    const ticks = el('div', 'gantt-ticks');
+    const intervalMin = totalMs <= 5 * 60000 ? 1 : totalMs <= 20 * 60000 ? 5 : 10;
+    const intervalMs = intervalMin * 60000;
+    for (let t = 0; t <= totalMs; t += intervalMs) {
+      const tick = el('div', 'gantt-tick');
+      tick.style.left = `${(t / totalMs) * 100}%`;
+      const mins = Math.round(t / 60000);
+      tick.textContent = mins === 0 ? '0' : `${mins}m`;
+      ticks.appendChild(tick);
+    }
+    headerRow.appendChild(ticks);
   }
-  chart.appendChild(ticks);
+  section.appendChild(headerRow);
 
   // Player rows
   for (let i = 0; i < stats.players.length; i++) {
     const p = stats.players[i];
-    const row = el('div', 'gantt-row');
+    const row = el('div', 'stats-unified-row');
+    row.style.borderLeft = `3px solid ${p.color}`;
+    row.style.paddingLeft = '0.5rem';
 
-    const label = el('div', 'gantt-label');
+    const label = el('div', 'stats-unified-label');
     const meeple = el('span', 'stats-meeple');
     meeple.innerHTML = MEEPLE_SVG;
     meeple.style.color = p.color;
     label.appendChild(meeple);
-    label.appendChild(document.createTextNode(p.name));
+    label.appendChild(el('span', 'stats-unified-name', p.name));
     row.appendChild(label);
 
-    const timeline = el('div', 'gantt-timeline');
-    for (const entry of turnLog) {
-      if (entry.type === 'player' && entry.player === i && entry.endMs != null) {
-        const bar = el('div', 'gantt-bar');
-        bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
-        bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
-        bar.style.backgroundColor = p.color;
-        timeline.appendChild(bar);
+    row.appendChild(uniCell(formatTimeLong(p.totalTime)));
+    row.appendChild(uniCell(`${p.turnCount}턴`));
+    row.appendChild(uniCell(p.penaltyCount > 0 ? `${p.penaltyCount}회` : '-'));
+
+    if (hasGantt) {
+      const timeline = el('div', 'gantt-timeline');
+      for (const entry of turnLog) {
+        if (entry.type === 'player' && entry.player === i && entry.endMs != null) {
+          const bar = el('div', 'gantt-bar');
+          bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
+          bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
+          bar.style.backgroundColor = p.color;
+          timeline.appendChild(bar);
+        }
       }
+      row.appendChild(timeline);
     }
-    row.appendChild(timeline);
-    chart.appendChild(row);
+
+    section.appendChild(row);
   }
 
   // Referee row
-  const refRow = el('div', 'gantt-row');
-  const refLabel = el('div', 'gantt-label');
-  refLabel.textContent = '⚖ 심판';
+  const refRow = el('div', 'stats-unified-row');
+  refRow.style.borderLeft = '3px solid #888';
+  refRow.style.paddingLeft = '0.5rem';
+
+  const refLabel = el('div', 'stats-unified-label');
+  refLabel.appendChild(el('span', 'stats-unified-name', '⚖ 심판'));
   refRow.appendChild(refLabel);
 
-  const refTimeline = el('div', 'gantt-timeline');
-  for (const entry of turnLog) {
-    if (entry.type === 'referee' && entry.endMs != null) {
-      const bar = el('div', 'gantt-bar');
-      bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
-      bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
-      bar.style.backgroundColor = '#888';
-      refTimeline.appendChild(bar);
-    }
-  }
-  refRow.appendChild(refTimeline);
-  chart.appendChild(refRow);
+  refRow.appendChild(uniCell(formatTimeLong(stats.referee.totalTime)));
+  refRow.appendChild(uniCell(`${stats.referee.turnCount}회`));
+  refRow.appendChild(uniCell('-'));
 
-  return chart;
+  if (hasGantt) {
+    const refTimeline = el('div', 'gantt-timeline');
+    for (const entry of turnLog) {
+      if (entry.type === 'referee' && entry.endMs != null) {
+        const bar = el('div', 'gantt-bar');
+        bar.style.left = `${(entry.startMs / totalMs) * 100}%`;
+        bar.style.width = `${((entry.endMs - entry.startMs) / totalMs) * 100}%`;
+        bar.style.backgroundColor = '#888';
+        refTimeline.appendChild(bar);
+      }
+    }
+    refRow.appendChild(refTimeline);
+  }
+
+  section.appendChild(refRow);
+  return section;
+}
+
+function uniCell(text, isHeader = false) {
+  const cell = el('div', `stats-unified-cell${isHeader ? ' is-header' : ''}`);
+  cell.textContent = text;
+  return cell;
 }
 
 // --- Helpers ---
@@ -582,13 +539,6 @@ function el(tag, className, text) {
   if (className) e.className = className;
   if (text !== undefined) e.textContent = text;
   return e;
-}
-
-function statItem(label, value) {
-  const item = el('div', 'stat-item');
-  item.appendChild(el('span', 'stat-label', label));
-  item.appendChild(el('span', 'stat-value', value));
-  return item;
 }
 
 export function flashScreen() {
