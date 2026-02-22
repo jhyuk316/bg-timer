@@ -583,7 +583,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   padding-right: 1rem;
 }
 .stats-unified-label {
-  flex: 0 0 calc(10em + 36px);
+  flex: 0 0 calc(10em + 16px);
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -610,21 +610,22 @@ button:disabled { opacity: 0.4; cursor: default; }
   font-size: 0.8rem;
   white-space: nowrap;
 }
-.stats-info-row .stats-unified-cell:nth-child(2) { flex: 1; margin-right: 2rem;}
-.stats-info-row .stats-unified-cell:nth-child(3) { flex: 1; margin-right: 2rem;}
-.stats-info-row .stats-unified-cell:nth-child(4) { flex: 1; margin-right: 2rem;}
+.stats-info-row .stats-unified-cell:nth-child(2) { flex: 1.5; margin-right: 1rem;}
+.stats-info-row .stats-unified-cell:nth-child(3) { flex: 1; margin-right: 1rem;}
+.stats-info-row .stats-unified-cell:nth-child(4) { flex: 1; margin-right: 1rem;}
 .stats-info-row::after { content: ''; flex: 1; }
+.stats-info-row:has(.gantt-controls)::after { display: none; }
 .stats-cell-label {
   font-size: 0.65rem;
   color: var(--text-dim);
 }
 
-/* Gantt controls */
+/* Gantt controls (inline in first player's info row) */
 .gantt-controls {
+  flex: 1;
   display: flex;
   justify-content: flex-end;
   gap: 0.3rem;
-  margin-bottom: 0.15rem;
 }
 .gantt-zoom-btn {
   width: 1.6rem;

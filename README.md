@@ -66,7 +66,7 @@ bg-timer/
 ## 아이콘 출처
 
 - Meeple icon by [Delapouite](https://delapouite.com/) — [game-icons.net](https://game-icons.net/1x1/delapouite/meeple.html) ([CC BY 3.0](https://creativecommons.org/licenses/by/3.0/))
-- Hourglass icon by [Font Awesome](https://fontawesome.com/) — [GitHub](https://github.com/FortAwesome/Font-Awesome) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))
+- Hourglass icon by [Bootstrap Icons](https://icons.getbootstrap.com/) — [GitHub](https://github.com/twbs/icons) ([MIT](https://opensource.org/licenses/MIT))
 
 ## 라이선스
 
