@@ -1,7 +1,7 @@
 import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playPause, playMainWarning, playPenaltyAlert } from './sound.js';
-import { saveGame as saveHistory, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
+import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
 
 const appEl = document.getElementById('app');
@@ -11,6 +11,7 @@ let pausedState = null; // { prevState, prevPlayer }
 let currentScreen = 'settings';
 let settingsPage = 1;
 let lastStats = null;
+let lastSavedGame = null;
 
 function showScreen(name) {
   currentScreen = name;
@@ -139,6 +140,7 @@ function startNewGame() {
   game = createGame(gameSettings);
   pausedState = null;
   lastStats = null;
+  lastSavedGame = null;
 
   game.onTick(() => {
     updateGameUI(game.getState());
@@ -339,13 +341,32 @@ function wireGameControls() {
     if (pausedState) {
       // Paused → end game
       if (confirm('게임을 종료할까요?')) {
-        lastStats = game.end();
+        finishGame();
         showScreen('stats');
       }
     } else {
       game.pause();
     }
   });
+}
+
+function buildHistoryData(stats, gameName) {
+  return {
+    gameName,
+    players: stats.players,
+    timerConfig: {
+      presetName: settings.presetName,
+      turnTime: settings.turnTime,
+      mainTime: settings.mainTime,
+      penaltyTime: settings.penaltyTime,
+    },
+    stats,
+  };
+}
+
+function finishGame() {
+  lastStats = game.end();
+  lastSavedGame = saveHistory(buildHistoryData(lastStats));
 }
 
 function updatePauseUI(isPaused) {
@@ -365,19 +386,14 @@ function showStats() {
   if (!lastStats) return showSettings();
   const names = getGameNames();
   renderStatsScreen(appEl, lastStats, names, {
+    gameName: lastSavedGame?.gameName,
     save(gameName) {
-      saveHistory({
-        gameName,
-        players: lastStats.players,
-        timerConfig: {
-          presetName: settings.presetName,
-          turnTime: settings.turnTime,
-          mainTime: settings.mainTime,
-          penaltyTime: settings.penaltyTime,
-        },
-        stats: lastStats,
-      });
-      alert('\uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4!');
+      if (lastSavedGame) {
+        const updated = updateGameName(lastSavedGame.id, gameName);
+        if (updated) lastSavedGame = updated;
+      } else {
+        lastSavedGame = saveHistory(buildHistoryData(lastStats, gameName));
+      }
       showScreen('settings');
     },
     newGame() {

@@ -391,6 +391,9 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
   nameInput.id = 'game-name-input';
   nameInput.placeholder = '게임명';
   nameInput.setAttribute('list', 'game-name-list');
+  if (callbacks.gameName) {
+    nameInput.value = callbacks.gameName;
+  }
 
   const datalist = document.createElement('datalist');
   datalist.id = 'game-name-list';
@@ -400,7 +403,7 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
     datalist.appendChild(opt);
   }
 
-  const saveBtn = el('button', 'btn-primary', '저장 & 새 게임');
+  const saveBtn = el('button', 'btn-primary', '이름 저장 & 새 게임');
   saveBtn.addEventListener('click', () => {
     const name = document.getElementById('game-name-input').value.trim();
     callbacks.save(name);

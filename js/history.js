@@ -27,6 +27,19 @@ export function saveGame(gameData) {
   return entry;
 }
 
+export function updateGameName(id, gameName) {
+  const name = (gameName || '').trim();
+  if (!name) return null;
+
+  const list = loadAll();
+  const game = list.find((g) => g.id === id);
+  if (!game) return null;
+
+  game.gameName = name;
+  saveAll(list);
+  return game;
+}
+
 export function getHistory() {
   return loadAll();
 }
