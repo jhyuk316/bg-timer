@@ -1,0 +1,23 @@
+# Realtime Database Rules Cases
+
+Run these cases in Firebase Console > Realtime Database > Rules Playground before publishing `database.rules.json`.
+
+Status: Pending console verification.
+
+| Case | Auth | Path | Method | Expected |
+|---|---|---|---|---|
+| Anonymous user cannot read codes | none | `/roomCodes/123456` | get | deny |
+| Authenticated user can resolve a valid code | guest UID | `/roomCodes/123456` | get | allow |
+| Host UID must match room creator | guest UID | `/rooms/room_test` | set with another `hostUid` | deny |
+| Host creates room | host UID | `/rooms/room_test` | set valid room | allow |
+| Guest joins self in lobby | guest UID | `/rooms/room_test/participants/guest` | set valid guest | allow |
+| Guest cannot write another participant | guest UID | `/rooms/room_test/participants/other` | set | deny |
+| Guest cannot change config | guest UID | `/rooms/room_test/config` | update | deny |
+| Host changes config | host UID | `/rooms/room_test/config` | update valid values | allow |
+| Guest claims an empty player | guest UID | `/rooms/room_test/players/p1` | update owner to guest | allow |
+| Guest cannot take another guest's player | guest UID | `/rooms/room_test/players/p2` | update owner | deny |
+| Joined guest switches any active player | guest UID | `/rooms/room_test/game` | transaction-shaped set, revision +1 | allow |
+| Outsider cannot change game | outsider UID | `/rooms/room_test/game` | set | deny |
+| Guest cannot end game | guest UID | `/rooms/room_test/game` | set status ended | deny |
+| Host ends game | host UID | `/rooms/room_test/game` | set status ended, revision +1 | allow |
+| Revision skip is rejected | host UID | `/rooms/room_test/game` | set revision +2 | deny |
