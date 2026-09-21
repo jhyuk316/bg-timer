@@ -14,6 +14,14 @@ import {
   subscribeRoom,
   updatePlayerName,
 } from './multiplayer/room-service.js';
+import {
+  endMultiplayerGame,
+  enterOperationalTime,
+  selectMultiplayerPlayer,
+  startMultiplayerGame,
+} from './multiplayer/game-service.js';
+import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
+import { getServerNow } from './multiplayer/firebase-client.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -28,8 +36,14 @@ let multiplayerRoom = null;
 let multiplayerError = '';
 let multiplayerLoading = false;
 let unsubscribeRoom = null;
+let multiplayerFrame = null;
+let lastHistoryBase = null;
 
 function showScreen(name) {
+  if (name !== 'game' && multiplayerFrame) {
+    cancelAnimationFrame(multiplayerFrame);
+    multiplayerFrame = null;
+  }
   currentScreen = name;
   switch (name) {
     case 'settings': showSettings(); break;
@@ -203,7 +217,13 @@ function enterLobby(session) {
       return;
     }
     multiplayerRoom = room;
-    showScreen('lobby');
+    if (room.status === 'playing' && room.game) {
+      showMultiplayerGame();
+    } else if (room.status === 'ended' && room.game) {
+      finishMultiplayerGame();
+    } else {
+      showScreen('lobby');
+    }
   }, (error) => {
     multiplayerError = error.message || '방 연결이 끊겼습니다.';
     if (currentScreen === 'lobby') showLobby();
@@ -230,12 +250,106 @@ function showLobby() {
     async setReady(ready) {
       await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
     },
-    startGame() {
-      multiplayerError = '게임 동기화를 준비하고 있습니다.';
-      showLobby();
+    async startGame() {
+      await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));
     },
   });
   restoreGlobalBar();
+}
+
+function multiplayerOwnerLabel(ownerUid) {
+  if (ownerUid === multiplayerSession.uid) return '내 기기';
+  if (ownerUid === multiplayerRoom.hostUid) return '방장 기기';
+  return '게스트 기기';
+}
+
+function toMultiplayerUiState(view) {
+  const activePlayer = view.players.findIndex((player) => player.id === view.activePlayerId);
+  return {
+    state: view.activeType === 'player' ? 'player' : 'referee',
+    activePlayer,
+    playerStates: view.players,
+    referee: view.referee,
+    gameStartTime: view.startedAt,
+    totalActiveTime: view.totalActiveTime,
+  };
+}
+
+function renderMultiplayerTick() {
+  if (currentScreen !== 'game' || appMode !== 'multi' || !multiplayerRoom?.game) return;
+  const view = deriveGameView(multiplayerRoom, getServerNow());
+  updateGameUI(toMultiplayerUiState(view));
+  multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
+}
+
+function showMultiplayerGame() {
+  if (!multiplayerSession || !multiplayerRoom?.game) return;
+  currentScreen = 'game';
+  if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
+
+  const view = deriveGameView(multiplayerRoom, getServerNow());
+  const players = view.players.map((player) => ({
+    name: player.name,
+    color: player.color,
+    ownerLabel: multiplayerOwnerLabel(player.ownerUid),
+    connected: multiplayerRoom.participants?.[player.ownerUid]?.connected !== false,
+  }));
+  renderGameScreen(appEl, toMultiplayerUiState(view), {
+    playerCount: players.length,
+    players,
+  }, {
+    showEndControl: multiplayerRoom.hostUid === multiplayerSession.uid,
+  });
+  updateGameUI(toMultiplayerUiState(view));
+
+  appEl.querySelectorAll('.player-area').forEach((area, index) => {
+    area.addEventListener('click', () => runMultiplayerGameAction(
+      () => selectMultiplayerPlayer(multiplayerSession.roomId, view.players[index].id),
+    ));
+  });
+  document.getElementById('referee-bar')?.addEventListener('click', () => runMultiplayerGameAction(
+    () => enterOperationalTime(multiplayerSession.roomId),
+  ));
+  document.getElementById('btn-end')?.addEventListener('click', async () => {
+    if (confirm('게임을 종료할까요?')) {
+      await runMultiplayerGameAction(() => endMultiplayerGame(multiplayerSession.roomId));
+    }
+  });
+  restoreGlobalBar();
+  multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
+}
+
+async function runMultiplayerGameAction(action) {
+  try {
+    await action();
+  } catch (error) {
+    multiplayerError = error.message || '게임 상태를 갱신하지 못했습니다.';
+  }
+}
+
+function finishMultiplayerGame() {
+  if (!multiplayerRoom?.game?.endedAt) return;
+  if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
+  multiplayerFrame = null;
+  lastStats = buildMultiplayerStats(multiplayerRoom);
+  lastHistoryBase = {
+    players: lastStats.players,
+    timerConfig: {
+      presetName: 'Multiplayer',
+      turnTime: multiplayerRoom.config.turnTimeMs / 1000,
+      mainTime: multiplayerRoom.config.mainTimeMs / 1000,
+      penaltyTime: multiplayerRoom.config.penaltyTimeMs / 1000,
+    },
+  };
+
+  const markerKey = `bg-timer-saved-room:${multiplayerSession.roomId}`;
+  const savedId = localStorage.getItem(markerKey);
+  lastSavedGame = savedId ? getHistoryGame(savedId) : null;
+  if (multiplayerRoom.hostUid === multiplayerSession.uid && !lastSavedGame) {
+    lastSavedGame = saveHistory(buildHistoryData(lastStats));
+    localStorage.setItem(markerKey, lastSavedGame.id);
+  }
+  showScreen('stats');
 }
 
 async function runLobbyAction(action) {
@@ -273,6 +387,7 @@ function startNewGame() {
   game = createGame(gameSettings);
   lastStats = null;
   lastSavedGame = null;
+  lastHistoryBase = null;
 
   game.onTick(() => {
     updateGameUI(game.getState());
@@ -461,6 +576,7 @@ function wireGameControls() {
 }
 
 function buildHistoryData(stats, gameName) {
+  if (lastHistoryBase) return { ...lastHistoryBase, gameName, stats };
   return {
     gameName,
     players: stats.players,
@@ -484,7 +600,9 @@ function finishGame() {
 function showStats() {
   if (!lastStats) return showSettings();
   const names = getGameNames();
+  const canSave = appMode !== 'multi' || multiplayerRoom?.hostUid === multiplayerSession?.uid;
   renderStatsScreen(appEl, lastStats, names, {
+    canSave,
     gameName: lastSavedGame?.gameName,
     save(gameName) {
       if (lastSavedGame) {

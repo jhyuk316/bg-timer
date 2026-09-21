@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bg-timer-v2';
+const CACHE_NAME = 'bg-timer-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,17 @@ const ASSETS = [
   './js/ui.js',
   './js/sound.js',
   './js/history.js',
+  './js/multiplayer/constants.js',
+  './js/multiplayer/firebase-client.js',
+  './js/multiplayer/firebase-config.js',
+  './js/multiplayer/game-service.js',
+  './js/multiplayer/game-state.js',
+  './js/multiplayer/multiplayer-ui.js',
+  './js/multiplayer/qr-code.js',
+  './js/multiplayer/room-code.js',
+  './js/multiplayer/room-service.js',
+  './js/multiplayer/room-state.js',
+  './vendor/qrcode.js',
   './icons/meeple.svg',
   './manifest.json',
 ];

@@ -256,7 +256,7 @@ function makeTimerInput(label, value, min, max, unit, onChange) {
 
 // --- Game Screen ---
 
-export function renderGameScreen(container, gameState, settings) {
+export function renderGameScreen(container, gameState, settings, options = {}) {
   container.innerHTML = '';
 
   // Top bar
@@ -301,6 +301,10 @@ export function renderGameScreen(container, gameState, settings) {
 
     area.appendChild(el('div', 'game-player-name', p.name));
 
+    if (p.ownerLabel) {
+      area.appendChild(el('div', `game-player-owner${p.connected === false ? ' disconnected' : ''}`, p.ownerLabel));
+    }
+
     const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].mainTimeRemaining));
     timerEl.id = `player-timer-${i}`;
     area.appendChild(timerEl);
@@ -318,11 +322,13 @@ export function renderGameScreen(container, gameState, settings) {
   container.appendChild(grid);
 
   // Control bar
-  const controls = el('div', 'game-controls');
-  const endBtn = el('button', 'ctrl-btn ctrl-danger', '게임 종료');
-  endBtn.id = 'btn-end';
-  controls.appendChild(endBtn);
-  container.appendChild(controls);
+  if (options.showEndControl !== false) {
+    const controls = el('div', 'game-controls');
+    const endBtn = el('button', 'ctrl-btn ctrl-danger', '게임 종료');
+    endBtn.id = 'btn-end';
+    controls.appendChild(endBtn);
+    container.appendChild(controls);
+  }
 }
 
 export function updateGameUI(gameState) {
@@ -396,29 +402,32 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
 
   // Save row: [input] [저장 & 새 게임]
   const saveRow = el('div', 'stats-save-row');
-  const nameInput = el('input', 'stats-name-input');
-  nameInput.type = 'text';
-  nameInput.id = 'game-name-input';
-  nameInput.placeholder = '게임명';
-  nameInput.setAttribute('list', 'game-name-list');
-  if (callbacks.gameName) {
-    nameInput.value = callbacks.gameName;
-  }
+  if (callbacks.canSave === false) {
+    const newGameBtn = el('button', 'btn-primary', '새 게임');
+    newGameBtn.addEventListener('click', callbacks.newGame);
+    saveRow.appendChild(newGameBtn);
+  } else {
+    const nameInput = el('input', 'stats-name-input');
+    nameInput.type = 'text';
+    nameInput.id = 'game-name-input';
+    nameInput.placeholder = '게임명';
+    nameInput.setAttribute('list', 'game-name-list');
+    if (callbacks.gameName) {
+      nameInput.value = callbacks.gameName;
+    }
 
-  const datalist = document.createElement('datalist');
-  datalist.id = 'game-name-list';
-  for (const n of savedNames) {
-    const opt = document.createElement('option');
-    opt.value = n;
-    datalist.appendChild(opt);
-  }
+    const datalist = document.createElement('datalist');
+    datalist.id = 'game-name-list';
+    for (const n of savedNames) {
+      const opt = document.createElement('option');
+      opt.value = n;
+      datalist.appendChild(opt);
+    }
 
-  const saveBtn = el('button', 'btn-primary', '이름 저장 & 새 게임');
-  saveBtn.addEventListener('click', () => {
-    const name = document.getElementById('game-name-input').value.trim();
-    callbacks.save(name);
-  });
-  saveRow.append(nameInput, datalist, saveBtn);
+    const saveBtn = el('button', 'btn-primary', '이름 저장 & 새 게임');
+    saveBtn.addEventListener('click', () => callbacks.save(nameInput.value.trim()));
+    saveRow.append(nameInput, datalist, saveBtn);
+  }
   wrap.appendChild(saveRow);
 
   container.appendChild(wrap);

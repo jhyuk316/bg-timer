@@ -4,11 +4,12 @@
 
 ## 주요 기능
 
-- **1~5인 플레이어** 지원, 이름/미플 색상 커스텀 (10색 팔레트 + 6종 보드게임 프리셋)
+- **1~6인 플레이어** 지원, 이름/미플 색상 커스텀 (10색 팔레트 + 6종 보드게임 프리셋)
+- **멀티플레이**: 숫자 6자리 방 코드/QR 참가, 여러 기기의 턴 조작과 재접속 동기화
 - **하이브리드 타이머**: 턴 딜레이(Fischer) + 메인 시간(Byoyomi) + 패널티(Scrabble)
 - **자유 선택 조작**: 아무 플레이어나 탭하여 턴 전환, 직접 전환 숏컷
 - **운영 타이머**: 턴 사이 공백시간 자동 측정 (카운트업)
-- **알림**: 메인 시간 진입 경고, 5분 TTS 음성 알림, 턴 시작/종료/일시정지 사운드
+- **알림**: 메인 시간 진입 경고, 5분 TTS 음성 알림, 턴 시작/종료 사운드
 - **게임 통계**: 종료 후 플레이어별 소요시간/턴수/패널티 + Gantt 차트
 - **히스토리**: 게임 결과 저장 및 과거 기록 열람
 - **PWA**: 오프라인 지원, 홈 화면 추가 가능
@@ -16,7 +17,8 @@
 ## 기술 스택
 
 - Vanilla JS (ES6 Modules), CSS, HTML
-- 외부 의존성 없음, 빌드 불필요
+- Firebase Realtime Database + Anonymous Authentication (멀티플레이)
+- 빌드 불필요, QR 생성 라이브러리는 저장소에 포함
 - localStorage로 설정/히스토리 저장
 - Service Worker로 오프라인 캐싱
 
@@ -46,7 +48,11 @@ bg-timer/
 │   ├── settings.js     # 설정 관리, 색상 팔레트/프리셋, localStorage
 │   ├── ui.js           # DOM 렌더링 (설정/게임/통계/히스토리 화면)
 │   ├── sound.js        # 알림 사운드 (Web Audio API)
-│   └── history.js      # 히스토리 저장/조회
+│   ├── history.js      # 히스토리 저장/조회
+│   └── multiplayer/    # 방, Firebase, 게임 이벤트 동기화
+├── database.rules.json # Realtime Database 보안 규칙
+├── firebase.json
+├── vendor/qrcode.js
 ├── manifest.json
 ├── sw.js
 └── icons/

@@ -96,7 +96,7 @@ rooms/{roomId}
     endedAt
     events/{eventId}
       revision
-      type                start | switch | referee | end
+      type                start | turn | referee | end
       actorUid
       playerId
       at
@@ -104,7 +104,7 @@ rooms/{roomId}
 
 방 ID는 추측하기 어려운 Firebase push ID를 사용한다. 방 코드는 `000000`부터 `999999`까지의 숫자 6자리 문자열이며 앞자리 `0`을 보존한다. `roomCodes` 생성은 transaction으로 충돌을 확인한 뒤 확정하며 이미 사용 중인 코드이면 새 코드를 만들어 다시 시도한다.
 
-플레이어 말은 최대 6개의 고정 슬롯을 사용한다. `paletteIndex`는 색상을 결정하며, `ownerUid`가 없으면 아직 선택되지 않은 말이다.
+플레이어 말 후보는 기존 10색 팔레트로 만들고 그중 최대 6개를 선택한다. `paletteIndex`는 색상을 결정하며, `ownerUid`가 없으면 아직 선택되지 않은 말이다.
 
 ## Authentication And Authorization
 
