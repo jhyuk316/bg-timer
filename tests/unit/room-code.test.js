@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  claimAvailableRoomCode,
   formatRoomCode,
   generateRoomCode,
   normalizeRoomCode,
@@ -21,4 +22,16 @@ test('rejects malformed room codes', () => {
   for (const value of ['12345', '1234567', '12A456', '12-456', '', null]) {
     assert.equal(normalizeRoomCode(value), null);
   }
+});
+
+test('retries when a generated room code is already claimed', async () => {
+  const randomValues = [0.123456, 0.654321];
+  const attempts = [];
+  const code = await claimAvailableRoomCode(async (candidate) => {
+    attempts.push(candidate);
+    return candidate === '654321';
+  }, () => randomValues.shift());
+
+  assert.equal(code, '654321');
+  assert.deepEqual(attempts, ['123456', '654321']);
 });

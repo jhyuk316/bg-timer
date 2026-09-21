@@ -17,3 +17,11 @@ export function formatRoomCode(code) {
   const normalized = normalizeRoomCode(code);
   return normalized ? `${normalized.slice(0, 3)} ${normalized.slice(3)}` : '';
 }
+
+export async function claimAvailableRoomCode(claim, random = Math.random, maxAttempts = 20) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const code = generateRoomCode(random);
+    if (await claim(code)) return code;
+  }
+  throw new Error('사용 가능한 방 코드를 만들지 못했습니다. 다시 시도해주세요.');
+}

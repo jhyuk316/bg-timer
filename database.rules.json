@@ -41,7 +41,7 @@
         },
         "participants": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (data.exists() || root.child('rooms').child($roomId).child('status').val() === 'lobby')",
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($roomId).child('hostUid').val() === auth.uid) && (data.exists() || root.child('rooms').child($roomId).child('status').val() === 'lobby')",
             ".validate": "newData.hasChildren(['role', 'ready', 'connected', 'joinedAt', 'lastSeenAt']) && (($uid === root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'host') || ($uid !== root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'guest')) && newData.child('ready').isBoolean() && newData.child('connected').isBoolean() && newData.child('joinedAt').isNumber() && newData.child('lastSeenAt').isNumber()",
             "$other": {
               ".validate": false
@@ -51,7 +51,7 @@
         "players": {
           "$playerId": {
             ".write": "auth != null && root.child('rooms').child($roomId).child('status').val() === 'lobby' && root.child('rooms').child($roomId).child('participants').child(auth.uid).exists() && (root.child('rooms').child($roomId).child('hostUid').val() === auth.uid || ((!data.child('ownerUid').exists() || data.child('ownerUid').val() === auth.uid) && (!newData.child('ownerUid').exists() || newData.child('ownerUid').val() === auth.uid)))",
-            ".validate": "$playerId.matches(/^p[0-5]$/) && newData.hasChildren(['name', 'paletteIndex']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 24 && newData.child('paletteIndex').isNumber() && newData.child('paletteIndex').val() >= 0 && newData.child('paletteIndex').val() <= 9 && (!newData.child('ownerUid').exists() || newData.child('ownerUid').isString())",
+            ".validate": "$playerId.matches(/^p[0-9]$/) && newData.hasChildren(['name', 'paletteIndex']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 24 && newData.child('paletteIndex').isNumber() && newData.child('paletteIndex').val() >= 0 && newData.child('paletteIndex').val() <= 9 && (!newData.child('ownerUid').exists() || newData.child('ownerUid').isString())",
             "$other": {
               ".validate": false
             }

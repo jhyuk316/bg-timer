@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  canAssignPlayer,
   canEditPlayer,
   canOperatePlayer,
   canStartGame,
+  createInitialRoom,
   getSelectedPlayers,
 } from '../../js/multiplayer/room-state.js';
 
@@ -70,4 +72,28 @@ test('every joined participant can operate every player during a game', () => {
   assert.equal(canOperatePlayer(room, 'host', 'p1'), true);
   assert.equal(canOperatePlayer(room, 'guest', 'p0'), true);
   assert.equal(canOperatePlayer(room, 'outsider', 'p0'), false);
+});
+
+test('creates ten color candidates while limiting selected players to six', () => {
+  const room = createInitialRoom({
+    hostUid: 'host',
+    createdAt: 1_000,
+    config: { turnTimeMs: 10_000, mainTimeMs: 60_000, penaltyTimeMs: 30_000 },
+    palette: Array.from({ length: 10 }, (_, index) => ({
+      name: `Color ${index}`,
+      hex: `#00000${index}`,
+    })),
+  });
+
+  assert.equal(Object.keys(room.players).length, 10);
+  assert.equal(room.status, 'lobby');
+  assert.equal(room.hostUid, 'host');
+});
+
+test('allows an unready participant to claim an empty color until six are selected', () => {
+  const room = makeRoom({ playerCount: 5, guestReady: false });
+  assert.equal(canAssignPlayer(room, 'guest', 'p5'), true);
+
+  room.players.p5.ownerUid = 'guest';
+  assert.equal(canAssignPlayer(room, 'guest', 'p6'), false);
 });
