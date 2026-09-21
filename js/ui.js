@@ -83,7 +83,7 @@ function renderSettingsPage1(container, settings, callbacks) {
     slot.addEventListener('click', () => {
       const result = callbacks.toggleMeeple(i);
       if (result === 'max') {
-        showMeepleError(container, '최대 5명까지 선택할 수 있습니다');
+        showMeepleError(container, '최대 6명까지 선택할 수 있습니다');
       }
     });
 
@@ -307,11 +307,11 @@ export function renderGameScreen(container, gameState, settings) {
   }
   container.appendChild(grid);
 
-  // Control bar (single button)
+  // Control bar
   const controls = el('div', 'game-controls');
-  const pauseBtn = el('button', 'ctrl-btn', '⏸ 일시정지');
-  pauseBtn.id = 'btn-pause';
-  controls.appendChild(pauseBtn);
+  const endBtn = el('button', 'ctrl-btn ctrl-danger', '게임 종료');
+  endBtn.id = 'btn-end';
+  controls.appendChild(endBtn);
   container.appendChild(controls);
 }
 

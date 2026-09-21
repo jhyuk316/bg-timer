@@ -1,13 +1,12 @@
 import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
-import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playPause, playMainWarning, playPenaltyAlert } from './sound.js';
+import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
 let game = null;
-let pausedState = null; // { prevState, prevPlayer }
 let currentScreen = 'settings';
 let settingsPage = 1;
 let lastStats = null;
@@ -37,7 +36,7 @@ function showSettings() {
         settings.activeMeeples[index] = false;
       } else {
         const activeCount = settings.activeMeeples.filter(Boolean).length;
-        if (activeCount >= 5) return 'max';
+        if (activeCount >= 6) return 'max';
         settings.activeMeeples[index] = true;
       }
       settings.playerCount = settings.activeMeeples.filter(Boolean).length;
@@ -138,7 +137,6 @@ function startNewGame() {
   };
 
   game = createGame(gameSettings);
-  pausedState = null;
   lastStats = null;
   lastSavedGame = null;
 
@@ -164,20 +162,7 @@ function startNewGame() {
         playPenaltyAlert();
         flashScreen();
         break;
-      case 'pause':
-        playPause();
-        pausedState = { prevState: data.prevState, prevPlayer: data.prevPlayer };
-        updatePauseUI(true);
-        updateGameUI(game.getState());
-        break;
-      case 'resume':
-        playTurnStart();
-        pausedState = null;
-        updatePauseUI(false);
-        break;
       case 'reset':
-        pausedState = null;
-        updatePauseUI(false);
         updateGameUI(game.getState());
         break;
     }
@@ -185,6 +170,7 @@ function startNewGame() {
 
   // Reset settings page for next time
   settingsPage = 1;
+  game.start();
   showScreen('game');
 }
 
@@ -227,7 +213,7 @@ function wireGameControls() {
 
   function canDrag() {
     const state = game.getState().state;
-    return pausedState || state === 'referee' || state === 'idle';
+    return state === 'referee' || state === 'idle';
   }
 
   function getPointerPos(e) {
@@ -315,10 +301,6 @@ function wireGameControls() {
     area.addEventListener('click', (e) => {
       if (isDragging) { e.preventDefault(); return; }
       const idx = parseInt(area.dataset.player, 10);
-      if (pausedState) {
-        game.resume(pausedState.prevState, pausedState.prevPlayer);
-        return;
-      }
       game.tapPlayer(idx);
     });
 
@@ -336,16 +318,10 @@ function wireGameControls() {
   grid.addEventListener('mouseup', handlePointerUp);
   grid.addEventListener('mouseleave', endDrag);
 
-  // Pause / End (unified button)
-  document.getElementById('btn-pause').addEventListener('click', () => {
-    if (pausedState) {
-      // Paused → end game
-      if (confirm('게임을 종료할까요?')) {
-        finishGame();
-        showScreen('stats');
-      }
-    } else {
-      game.pause();
+  document.getElementById('btn-end').addEventListener('click', () => {
+    if (confirm('게임을 종료할까요?')) {
+      finishGame();
+      showScreen('stats');
     }
   });
 }
@@ -367,17 +343,6 @@ function buildHistoryData(stats, gameName) {
 function finishGame() {
   lastStats = game.end();
   lastSavedGame = saveHistory(buildHistoryData(lastStats));
-}
-
-function updatePauseUI(isPaused) {
-  const btn = document.getElementById('btn-pause');
-  if (btn) {
-    btn.textContent = isPaused ? '\u23F9 \uAC8C\uC784 \uC885\uB8CC' : '\u23F8 \uC77C\uC2DC\uC815\uC9C0';
-  }
-  const grid = document.getElementById('player-grid');
-  if (grid) {
-    grid.classList.toggle('paused', isPaused);
-  }
 }
 
 // --- Stats ---

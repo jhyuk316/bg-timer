@@ -437,10 +437,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .players-3 { grid-template: 1fr / repeat(3, 1fr); }
 .players-4 { grid-template: 1fr / repeat(4, 1fr); }
 .players-5 { grid-template: 1fr / repeat(5, 1fr); }
-
-.player-grid.paused {
-  opacity: 0.5;
-}
+.players-6 { grid-template: 1fr / repeat(6, minmax(0, 1fr)); }
 
 /* Player area */
 .player-area {
@@ -525,6 +522,13 @@ button:disabled { opacity: 0.4; cursor: default; }
   font-weight: 600;
   min-height: 1em;
 }
+
+.players-6 .player-area { padding: 0.3rem; }
+.players-6 .game-meeple { width: 52px; height: 52px; }
+.players-6 .game-player-name { font-size: 0.72rem; }
+.players-6 .game-timer { font-size: 1.4rem; }
+.players-6 .game-delay { font-size: 0.72rem; }
+.players-6 .game-penalty { font-size: 0.6rem; }
 
 /* Game controls */
 .game-controls {
