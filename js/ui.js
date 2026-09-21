@@ -70,6 +70,16 @@ function renderSettingsPage1(container, settings, callbacks) {
 
   const wrap = el('div', 'settings-wrap');
   wrap.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
+  if (callbacks.setMode) {
+    const modeSwitch = el('div', 'mode-switch');
+    for (const [value, label] of [['single', '싱글'], ['multi', '멀티']]) {
+      const button = el('button', `mode-switch-btn${callbacks.mode === value ? ' active' : ''}`, label);
+      button.type = 'button';
+      button.addEventListener('click', () => callbacks.setMode(value));
+      modeSwitch.appendChild(button);
+    }
+    wrap.appendChild(modeSwitch);
+  }
 
   // Meeple selection section (hero)
   const meepleSection = el('div', 'settings-section');

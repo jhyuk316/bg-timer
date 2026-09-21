@@ -3,6 +3,17 @@ import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
+import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/multiplayer-ui.js';
+import { normalizeRoomCode } from './multiplayer/room-code.js';
+import {
+  createRoom,
+  joinRoom as joinMultiplayerRoom,
+  restoreRoom,
+  setPlayerOwner,
+  setReady as setMultiplayerReady,
+  subscribeRoom,
+  updatePlayerName,
+} from './multiplayer/room-service.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -11,6 +22,12 @@ let currentScreen = 'settings';
 let settingsPage = 1;
 let lastStats = null;
 let lastSavedGame = null;
+let appMode = 'single';
+let multiplayerSession = null;
+let multiplayerRoom = null;
+let multiplayerError = '';
+let multiplayerLoading = false;
+let unsubscribeRoom = null;
 
 function showScreen(name) {
   currentScreen = name;
@@ -19,6 +36,7 @@ function showScreen(name) {
     case 'game': showGame(); break;
     case 'stats': showStats(); break;
     case 'history': showHistory(); break;
+    case 'lobby': showLobby(); break;
   }
 }
 
@@ -30,7 +48,13 @@ function restoreGlobalBar() {
 // --- Settings ---
 
 function showSettings() {
+  if (appMode === 'multi') {
+    showMultiplayerEntry();
+    return;
+  }
   renderSettingsScreen(appEl, settings, settingsPage, {
+    mode: appMode,
+    setMode,
     toggleMeeple(index) {
       if (settings.activeMeeples[index]) {
         settings.activeMeeples[index] = false;
@@ -112,6 +136,116 @@ function showSettings() {
     },
   });
   restoreGlobalBar();
+}
+
+function setMode(mode) {
+  appMode = mode;
+  multiplayerError = '';
+  if (mode === 'single') {
+    unsubscribeRoom?.();
+    unsubscribeRoom = null;
+  }
+  showScreen('settings');
+}
+
+function showMultiplayerEntry() {
+  const queryCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') || '');
+  renderMultiplayerEntryScreen(appEl, {
+    code: queryCode ? `${queryCode.slice(0, 3)} ${queryCode.slice(3)}` : '',
+    error: multiplayerError,
+    loading: multiplayerLoading,
+  }, {
+    setMode,
+    async createRoom() {
+      await runMultiplayerAction(async () => {
+        const config = {
+          turnTimeMs: settings.turnTime * 1000,
+          mainTimeMs: settings.mainTime * 1000,
+          penaltyTimeMs: settings.penaltyTime * 1000,
+        };
+        const session = await createRoom(config, COLOR_PALETTE);
+        enterLobby(session);
+      });
+    },
+    async joinRoom(code) {
+      await runMultiplayerAction(async () => {
+        const session = await joinMultiplayerRoom(code);
+        enterLobby(session);
+      });
+    },
+  });
+  restoreGlobalBar();
+}
+
+async function runMultiplayerAction(action) {
+  multiplayerLoading = true;
+  multiplayerError = '';
+  showMultiplayerEntry();
+  try {
+    await action();
+  } catch (error) {
+    multiplayerError = error.message || '요청을 처리하지 못했습니다.';
+  } finally {
+    multiplayerLoading = false;
+    if (currentScreen !== 'lobby') showMultiplayerEntry();
+  }
+}
+
+function enterLobby(session) {
+  multiplayerSession = session;
+  multiplayerRoom = null;
+  multiplayerError = '';
+  unsubscribeRoom?.();
+  unsubscribeRoom = subscribeRoom(session.roomId, (room) => {
+    if (!room) {
+      multiplayerError = '방을 찾을 수 없습니다.';
+      showScreen('settings');
+      return;
+    }
+    multiplayerRoom = room;
+    showScreen('lobby');
+  }, (error) => {
+    multiplayerError = error.message || '방 연결이 끊겼습니다.';
+    if (currentScreen === 'lobby') showLobby();
+  });
+  currentScreen = 'lobby';
+  appEl.innerHTML = '<div class="multi-loading">방에 연결하는 중...</div>';
+}
+
+function showLobby() {
+  if (!multiplayerSession || !multiplayerRoom) return;
+  const uid = multiplayerSession.uid;
+  renderLobbyScreen(appEl, multiplayerRoom, {
+    uid,
+    self: multiplayerRoom.participants?.[uid],
+    isHost: multiplayerRoom.hostUid === uid,
+    error: multiplayerError,
+  }, {
+    async togglePlayer(playerId, ownerUid) {
+      await runLobbyAction(() => setPlayerOwner(multiplayerSession.roomId, playerId, ownerUid));
+    },
+    async renamePlayer(playerId, name) {
+      await runLobbyAction(() => updatePlayerName(multiplayerSession.roomId, playerId, name));
+    },
+    async setReady(ready) {
+      await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
+    },
+    startGame() {
+      multiplayerError = '게임 동기화를 준비하고 있습니다.';
+      showLobby();
+    },
+  });
+  restoreGlobalBar();
+}
+
+async function runLobbyAction(action) {
+  multiplayerError = '';
+  try {
+    await action();
+  } catch (error) {
+    multiplayerError = error.message || '요청을 처리하지 못했습니다.';
+    showLobby();
+  }
 }
 
 // --- Game ---
@@ -425,6 +559,7 @@ function init() {
   });
 
   showScreen('settings');
+  resumeMultiplayerIfNeeded();
 
   // Force landscape orientation
   try {
@@ -444,6 +579,26 @@ function init() {
         location.reload();
       }
     });
+  }
+}
+
+async function resumeMultiplayerIfNeeded() {
+  const queryCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') || '');
+  if (queryCode) {
+    appMode = 'multi';
+    showScreen('settings');
+    await runMultiplayerAction(async () => enterLobby(await joinMultiplayerRoom(queryCode)));
+    return;
+  }
+
+  try {
+    const session = await restoreRoom();
+    if (session) {
+      appMode = 'multi';
+      enterLobby(session);
+    }
+  } catch {
+    // A stale or offline room should not prevent single mode startup.
   }
 }
 
