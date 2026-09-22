@@ -86,9 +86,12 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   left.appendChild(el('div', 'lobby-kicker', '방 코드'));
   left.appendChild(el('div', 'lobby-code', formatRoomCode(room.code)));
-  const qrButton = el('button', 'btn-secondary lobby-qr-btn', 'QR 보기');
-  qrButton.addEventListener('click', () => showQrModal(room.code));
-  left.appendChild(qrButton);
+  const qrTarget = el('div', 'lobby-qr');
+  const joinUrl = new URL(location.href);
+  joinUrl.search = '';
+  joinUrl.searchParams.set('r', room.code);
+  renderQrCode(qrTarget, joinUrl.toString());
+  left.appendChild(qrTarget);
 
   left.appendChild(el('h2', 'lobby-heading', `접속 ${Object.keys(room.participants || {}).length}대`));
   const participantList = el('div', 'participant-list');
@@ -156,26 +159,4 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   wrap.append(left, right);
   container.appendChild(wrap);
-}
-
-export function showQrModal(code) {
-  const existing = document.querySelector('.qr-modal');
-  existing?.remove();
-
-  const modal = el('div', 'qr-modal');
-  const dialog = el('div', 'qr-dialog');
-  const close = el('button', 'qr-close', '×');
-  close.setAttribute('aria-label', '닫기');
-  close.addEventListener('click', () => modal.remove());
-  const qrTarget = el('div', 'qr-code');
-  const url = new URL(location.href);
-  url.search = '';
-  url.searchParams.set('room', code);
-  renderQrCode(qrTarget, url.toString());
-  dialog.append(close, qrTarget, el('div', 'qr-room-code', formatRoomCode(code)));
-  modal.appendChild(dialog);
-  modal.addEventListener('click', (event) => {
-    if (event.target === modal) modal.remove();
-  });
-  document.body.appendChild(modal);
 }

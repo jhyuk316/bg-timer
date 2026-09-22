@@ -163,7 +163,8 @@ function setMode(mode) {
 }
 
 function showMultiplayerEntry() {
-  const queryCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') || '');
+  const searchParams = new URLSearchParams(location.search);
+  const queryCode = normalizeRoomCode(searchParams.get('r') || searchParams.get('room') || '');
   renderMultiplayerEntryScreen(appEl, {
     code: queryCode ? `${queryCode.slice(0, 3)} ${queryCode.slice(3)}` : '',
     error: multiplayerError,
@@ -701,7 +702,8 @@ function init() {
 }
 
 async function resumeMultiplayerIfNeeded() {
-  const queryCode = normalizeRoomCode(new URLSearchParams(location.search).get('room') || '');
+  const searchParams = new URLSearchParams(location.search);
+  const queryCode = normalizeRoomCode(searchParams.get('r') || searchParams.get('room') || '');
   if (queryCode) {
     appMode = 'multi';
     showScreen('settings');
