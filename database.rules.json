@@ -43,6 +43,11 @@
           "$uid": {
             ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($roomId).child('hostUid').val() === auth.uid) && (data.exists() || root.child('rooms').child($roomId).child('status').val() === 'lobby')",
             ".validate": "newData.hasChildren(['role', 'ready', 'connected', 'joinedAt', 'lastSeenAt']) && (($uid === root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'host') || ($uid !== root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'guest')) && newData.child('ready').isBoolean() && newData.child('connected').isBoolean() && newData.child('joinedAt').isNumber() && newData.child('lastSeenAt').isNumber()",
+            "role": { ".validate": true },
+            "ready": { ".validate": true },
+            "connected": { ".validate": true },
+            "joinedAt": { ".validate": true },
+            "lastSeenAt": { ".validate": true },
             "$other": {
               ".validate": false
             }
@@ -51,7 +56,11 @@
         "players": {
           "$playerId": {
             ".write": "auth != null && root.child('rooms').child($roomId).child('status').val() === 'lobby' && root.child('rooms').child($roomId).child('participants').child(auth.uid).exists() && (root.child('rooms').child($roomId).child('hostUid').val() === auth.uid || ((!data.child('ownerUid').exists() || data.child('ownerUid').val() === auth.uid) && (!newData.child('ownerUid').exists() || newData.child('ownerUid').val() === auth.uid)))",
-            ".validate": "$playerId.matches(/^p[0-9]$/) && newData.hasChildren(['name', 'paletteIndex']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 24 && newData.child('paletteIndex').isNumber() && newData.child('paletteIndex').val() >= 0 && newData.child('paletteIndex').val() <= 9 && (!newData.child('ownerUid').exists() || newData.child('ownerUid').isString())",
+            ".validate": "$playerId.matches(/^p[0-9]$/) && newData.hasChildren(['name', 'color', 'paletteIndex']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 24 && newData.child('color').isString() && newData.child('color').val().matches(/^#[0-9a-fA-F]{6}$/) && newData.child('paletteIndex').isNumber() && newData.child('paletteIndex').val() >= 0 && newData.child('paletteIndex').val() <= 9 && (!newData.child('ownerUid').exists() || newData.child('ownerUid').isString())",
+            "name": { ".validate": true },
+            "color": { ".validate": true },
+            "paletteIndex": { ".validate": true },
+            "ownerUid": { ".validate": true },
             "$other": {
               ".validate": false
             }
@@ -60,10 +69,26 @@
         "game": {
           ".write": "auth != null && root.child('rooms').child($roomId).child('participants').child(auth.uid).exists() && (root.child('rooms').child($roomId).child('hostUid').val() === auth.uid || (data.child('status').val() === 'running' && newData.child('status').val() === 'running'))",
           ".validate": "newData.hasChildren(['revision', 'status', 'activeType', 'changedAt', 'startedAt', 'events']) && newData.child('revision').isNumber() && ((!data.exists() && newData.child('revision').val() === 1) || (data.exists() && newData.child('revision').val() === data.child('revision').val() + 1)) && (newData.child('status').val() === 'running' || newData.child('status').val() === 'ended') && (newData.child('activeType').val() === 'player' || newData.child('activeType').val() === 'referee' || newData.child('activeType').val() === 'ended') && newData.child('changedAt').isNumber() && newData.child('changedAt').val() <= now + 10000 && newData.child('startedAt').isNumber() && (!data.exists() || newData.child('startedAt').val() === data.child('startedAt').val()) && (newData.child('activeType').val() !== 'player' || root.child('rooms').child($roomId).child('players').child(newData.child('activePlayerId').val()).child('ownerUid').exists())",
+          "revision": { ".validate": true },
+          "status": { ".validate": true },
+          "activeType": { ".validate": true },
+          "activePlayerId": { ".validate": true },
+          "changedAt": { ".validate": true },
+          "startedAt": { ".validate": true },
+          "endedAt": { ".validate": true },
           "events": {
             "$eventId": {
-              ".validate": "(data.exists() && newData.val() === data.val()) || (!data.exists() && newData.hasChildren(['revision', 'type', 'actorUid', 'at']) && newData.child('revision').isNumber() && newData.child('revision').val() === newData.parent().parent().child('revision').val() && $eventId === 'r' + newData.child('revision').val() && (newData.child('type').val() === 'start' || newData.child('type').val() === 'turn' || newData.child('type').val() === 'referee' || newData.child('type').val() === 'end') && newData.child('actorUid').val() === auth.uid && newData.child('at').isNumber() && newData.child('at').val() <= now + 10000 && (newData.child('type').val() !== 'turn' || root.child('rooms').child($roomId).child('players').child(newData.child('playerId').val()).child('ownerUid').exists()))"
+              ".validate": "(data.exists() && newData.val() === data.val()) || (!data.exists() && newData.hasChildren(['revision', 'type', 'actorUid', 'at']) && newData.child('revision').isNumber() && newData.child('revision').val() === newData.parent().parent().child('revision').val() && $eventId === 'r' + newData.child('revision').val() && (newData.child('type').val() === 'start' || newData.child('type').val() === 'turn' || newData.child('type').val() === 'referee' || newData.child('type').val() === 'end') && newData.child('actorUid').val() === auth.uid && newData.child('at').isNumber() && newData.child('at').val() <= now + 10000 && (newData.child('type').val() !== 'turn' || root.child('rooms').child($roomId).child('players').child(newData.child('playerId').val()).child('ownerUid').exists()))",
+              "revision": { ".validate": true },
+              "type": { ".validate": true },
+              "actorUid": { ".validate": true },
+              "playerId": { ".validate": true },
+              "at": { ".validate": true },
+              "$other": { ".validate": false }
             }
+          },
+          "$other": {
+            ".validate": false
           }
         },
         "$other": {

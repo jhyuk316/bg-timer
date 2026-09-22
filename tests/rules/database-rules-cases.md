@@ -10,6 +10,7 @@ Status: Pending console verification.
 | Authenticated user can resolve a valid code | guest UID | `/roomCodes/123456` | get | allow |
 | Host UID must match room creator | guest UID | `/rooms/room_test` | set with another `hostUid` | deny |
 | Host creates room | host UID | `/rooms/room_test` | set valid room | allow |
+| Room rejects unknown player fields | host UID | `/rooms/room_test/players/p0` | add arbitrary field | deny |
 | Guest joins self in lobby | guest UID | `/rooms/room_test/participants/guest` | set valid guest | allow |
 | Guest cannot write another participant | guest UID | `/rooms/room_test/participants/other` | set | deny |
 | Guest cannot change config | guest UID | `/rooms/room_test/config` | update | deny |
@@ -19,6 +20,7 @@ Status: Pending console verification.
 | Joined guest switches any active player | guest UID | `/rooms/room_test/game` | transaction-shaped set, revision +1 | allow |
 | Guest can return an active player to operational time | guest UID | `/rooms/room_test/game` | append `referee`, revision +1 | allow |
 | Existing event cannot be rewritten | joined UID | `/rooms/room_test/game/events/r1` | change timestamp or actor | deny |
+| Game rejects unknown event fields | joined UID | `/rooms/room_test/game` | append event with arbitrary field | deny |
 | Turn cannot target an unclaimed player | joined UID | `/rooms/room_test/game` | append `turn` for empty player | deny |
 | Started time cannot change after start | host UID | `/rooms/room_test/game` | change `startedAt`, revision +1 | deny |
 | Outsider cannot change game | outsider UID | `/rooms/room_test/game` | set | deny |
