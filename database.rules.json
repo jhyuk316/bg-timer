@@ -41,6 +41,7 @@
         },
         "participants": {
           "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
             ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($roomId).child('hostUid').val() === auth.uid) && (data.exists() || root.child('rooms').child($roomId).child('status').val() === 'lobby')",
             ".validate": "newData.hasChildren(['role', 'ready', 'connected', 'joinedAt', 'lastSeenAt']) && (($uid === root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'host') || ($uid !== root.child('rooms').child($roomId).child('hostUid').val() && newData.child('role').val() === 'guest')) && newData.child('ready').isBoolean() && newData.child('connected').isBoolean() && newData.child('joinedAt').isNumber() && newData.child('lastSeenAt').isNumber()",
             "role": { ".validate": true },
