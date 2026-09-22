@@ -22,6 +22,18 @@ function clearRoomSession() {
   globalThis.localStorage?.removeItem(ROOM_STORAGE_KEY);
 }
 
+export async function forgetRoom(roomId) {
+  presenceCleanup?.();
+  try {
+    const services = await getFirebaseServices();
+    await services.databaseSdk.onDisconnect(
+      services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${getClientUid()}`),
+    ).cancel();
+  } finally {
+    clearRoomSession();
+  }
+}
+
 async function connectPresence(roomId) {
   presenceCleanup?.();
   const services = await getFirebaseServices();
@@ -271,6 +283,14 @@ export async function restoreRoom() {
     return null;
   }
 
+  const room = await services.databaseSdk.get(
+    services.databaseSdk.ref(services.database, `rooms/${session.roomId}`),
+  );
+  if (room.val()?.status === 'ended' && !room.val()?.game) {
+    clearRoomSession();
+    return null;
+  }
+
   await connectPresence(session.roomId);
   return { ...session, uid };
 }
@@ -284,9 +304,9 @@ export async function leaveRoom(roomId) {
   if (room?.status !== 'lobby') throw new Error('게임 중에는 방에서 나갈 수 없습니다.');
 
   if (room.hostUid === uid) {
-    await services.databaseSdk.update(
-      services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
-      { connected: false, ready: false },
+    await services.databaseSdk.update(roomRef, { status: 'ended' });
+    await services.databaseSdk.remove(
+      services.databaseSdk.ref(services.database, `roomCodes/${room.code}`),
     );
   } else {
     for (const [playerId, player] of Object.entries(room?.players || {})) {
@@ -301,9 +321,5 @@ export async function leaveRoom(roomId) {
       services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
     );
   }
-  presenceCleanup?.();
-  await services.databaseSdk.onDisconnect(
-    services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
-  ).cancel();
-  clearRoomSession();
+  await forgetRoom(roomId);
 }

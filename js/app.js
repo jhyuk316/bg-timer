@@ -8,6 +8,7 @@ import { normalizeRoomCode } from './multiplayer/room-code.js';
 import {
   createRoom,
   cleanupStaleLobbyParticipants,
+  forgetRoom,
   leaveRoom,
   joinRoom as joinMultiplayerRoom,
   restoreRoom,
@@ -40,6 +41,20 @@ let multiplayerLoading = false;
 let unsubscribeRoom = null;
 let multiplayerFrame = null;
 let lastHistoryBase = null;
+let multiplayerLeaving = false;
+
+function returnToMultiplayerEntry(message = '') {
+  unsubscribeRoom?.();
+  unsubscribeRoom = null;
+  multiplayerSession = null;
+  multiplayerRoom = null;
+  multiplayerError = message;
+  const url = new URL(location.href);
+  url.searchParams.delete('r');
+  url.searchParams.delete('room');
+  history.replaceState(null, '', url);
+  showScreen('settings');
+}
 
 function showScreen(name) {
   if (name !== 'game' && multiplayerFrame) {
@@ -220,6 +235,13 @@ function enterLobby(session) {
       return;
     }
     multiplayerRoom = room;
+    if (room.status === 'ended' && !room.game) {
+      if (!multiplayerLeaving) {
+        forgetRoom(session.roomId).catch(() => {});
+        returnToMultiplayerEntry('방장이 나가 대기실이 종료되었습니다.');
+      }
+      return;
+    }
     if (room.status === 'lobby' && room.hostUid === session.uid) {
       cleanupStaleLobbyParticipants(session.roomId, room).catch(() => {});
     }
@@ -261,21 +283,15 @@ function showLobby() {
       await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));
     },
     async leaveRoom() {
+      multiplayerLeaving = true;
       try {
         await leaveRoom(multiplayerSession.roomId);
-        unsubscribeRoom?.();
-        unsubscribeRoom = null;
-        multiplayerSession = null;
-        multiplayerRoom = null;
-        multiplayerError = '';
-        const url = new URL(location.href);
-        url.searchParams.delete('r');
-        url.searchParams.delete('room');
-        history.replaceState(null, '', url);
-        showScreen('settings');
+        returnToMultiplayerEntry();
       } catch (error) {
         multiplayerError = error.message || '방에서 나가지 못했습니다.';
         showLobby();
+      } finally {
+        multiplayerLeaving = false;
       }
     },
   });
