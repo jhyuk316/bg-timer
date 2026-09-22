@@ -21,7 +21,7 @@ export async function startMultiplayerGame(roomId) {
   const { roomRef, room } = await loadRoom(services, roomId);
   if (room.hostUid !== uid) throw new Error('방장만 게임을 시작할 수 있습니다.');
   if (room.status !== 'lobby') throw new Error('이미 시작된 게임입니다.');
-  if (!canStartGame(room)) throw new Error('플레이어 선택과 모든 참가자의 준비를 확인해주세요.');
+  if (!canStartGame(room, getServerNow())) throw new Error('플레이어 선택과 모든 참가자의 준비를 확인해주세요.');
 
   const game = createInitialGame(getServerNow(), uid);
   await services.databaseSdk.update(roomRef, { status: 'playing', game });

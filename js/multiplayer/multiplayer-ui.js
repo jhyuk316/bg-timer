@@ -1,6 +1,6 @@
 import { COLOR_PALETTE } from '../settings.js';
 import { formatRoomCode } from './room-code.js';
-import { canStartGame, getSelectedPlayers } from './room-state.js';
+import { canStartGame, getSelectedPlayers, isParticipantPresent } from './room-state.js';
 import { renderQrCode } from './qr-code.js';
 
 function el(tag, className, text) {
@@ -93,11 +93,13 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   renderQrCode(qrTarget, joinUrl.toString());
   left.appendChild(qrTarget);
 
-  left.appendChild(el('h2', 'lobby-heading', `접속 ${Object.keys(room.participants || {}).length}대`));
+  const presentParticipants = Object.entries(room.participants || {})
+    .filter(([, participant]) => isParticipantPresent(participant, context.now));
+  left.appendChild(el('h2', 'lobby-heading', `접속 ${presentParticipants.length}대`));
   const participantList = el('div', 'participant-list');
-  for (const [uid, participant] of Object.entries(room.participants || {})) {
+  for (const [uid, participant] of presentParticipants) {
     const row = el('div', 'participant-row');
-    row.appendChild(el('span', `connection-dot${participant.connected ? ' online' : ''}`));
+    row.appendChild(el('span', 'connection-dot online'));
     row.appendChild(el('span', 'participant-name', participantLabel(room, uid, context.uid)));
     row.appendChild(el('span', `ready-state${participant.ready ? ' ready' : ''}`, participant.ready ? '준비' : '선택 중'));
     participantList.appendChild(row);
@@ -113,7 +115,8 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   for (const [playerId, player] of Object.entries(room.players || {})) {
     const isMine = player.ownerUid === context.uid;
     const isSelected = Boolean(player.ownerUid);
-    const ownerConnected = !player.ownerUid || room.participants?.[player.ownerUid]?.connected;
+    const ownerConnected = !player.ownerUid
+      || isParticipantPresent(room.participants?.[player.ownerUid], context.now);
     const tile = el('div', `lobby-player${isSelected ? ' selected' : ''}${isMine ? ' mine' : ''}${ownerConnected ? '' : ' disconnected'}`);
     tile.style.setProperty('--player-color', player.color || COLOR_PALETTE[player.paletteIndex]?.hex);
 
@@ -151,7 +154,7 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   if (context.isHost) {
     const startButton = el('button', 'btn-primary', '게임 시작');
-    startButton.disabled = !canStartGame(room);
+    startButton.disabled = !canStartGame(room, context.now);
     startButton.addEventListener('click', callbacks.startGame);
     footer.appendChild(startButton);
   }

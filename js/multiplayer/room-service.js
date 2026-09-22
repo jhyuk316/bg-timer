@@ -1,9 +1,10 @@
 import { getClientUid, getFirebaseServices, getServerNow } from './firebase-client.js';
-import { MAX_PLAYERS, ROOM_STORAGE_KEY } from './constants.js';
+import { LOBBY_STALE_MS, MAX_PLAYERS, PRESENCE_HEARTBEAT_MS, ROOM_STORAGE_KEY } from './constants.js';
 import { claimAvailableRoomCode, normalizeRoomCode } from './room-code.js';
-import { canAssignPlayer, createInitialRoom, getSelectedPlayers } from './room-state.js';
+import { canAssignPlayer, createInitialRoom, getSelectedPlayers, getStaleLobbyParticipantUids } from './room-state.js';
 
 let presenceCleanup = null;
+let staleCleanupInFlight = false;
 
 function saveRoomSession(roomId, code) {
   globalThis.localStorage?.setItem(ROOM_STORAGE_KEY, JSON.stringify({ roomId, code }));
@@ -30,22 +31,78 @@ async function connectPresence(roomId) {
     `rooms/${roomId}/participants/${uid}`,
   );
   const connectedRef = services.databaseSdk.ref(services.database, '.info/connected');
+  let heartbeat = null;
+
+  const updatePresence = () => services.databaseSdk.update(participantRef, {
+    connected: true,
+    lastSeenAt: getServerNow(),
+  });
+  const markLeaving = () => {
+    services.databaseSdk.update(participantRef, { connected: false }).catch(() => {});
+  };
 
   const unsubscribe = services.databaseSdk.onValue(connectedRef, async (snapshot) => {
-    if (snapshot.val() !== true) return;
+    if (snapshot.val() !== true) {
+      clearInterval(heartbeat);
+      heartbeat = null;
+      return;
+    }
     const disconnected = services.databaseSdk.onDisconnect(participantRef);
-    await disconnected.update({ connected: false, lastSeenAt: services.databaseSdk.serverTimestamp() });
-    await services.databaseSdk.update(participantRef, {
-      connected: true,
-      lastSeenAt: getServerNow(),
-    });
+    await disconnected.update({ connected: false });
+    await updatePresence();
+    clearInterval(heartbeat);
+    heartbeat = setInterval(() => updatePresence().catch(() => {}), PRESENCE_HEARTBEAT_MS);
   });
+  globalThis.addEventListener?.('pagehide', markLeaving);
 
   presenceCleanup = () => {
     unsubscribe();
+    clearInterval(heartbeat);
+    globalThis.removeEventListener?.('pagehide', markLeaving);
     presenceCleanup = null;
   };
   return presenceCleanup;
+}
+
+export async function cleanupStaleLobbyParticipants(roomId, room, now = getServerNow()) {
+  if (staleCleanupInFlight || room?.hostUid !== getClientUid()) return;
+  const staleUids = getStaleLobbyParticipantUids(room, now);
+  if (staleUids.length === 0) return;
+
+  staleCleanupInFlight = true;
+  try {
+    const services = await getFirebaseServices();
+    for (const staleUid of staleUids) {
+      const status = await services.databaseSdk.get(
+        services.databaseSdk.ref(services.database, `rooms/${roomId}/status`),
+      );
+      if (status.val() !== 'lobby') break;
+
+      const participantRef = services.databaseSdk.ref(
+        services.database,
+        `rooms/${roomId}/participants/${staleUid}`,
+      );
+      const removed = await services.databaseSdk.runTransaction(participantRef, (participant) => {
+        if (!participant?.lastSeenAt || getServerNow() - participant.lastSeenAt < LOBBY_STALE_MS) return;
+        return null;
+      }, { applyLocally: false });
+      if (!removed.committed) continue;
+
+      for (const [playerId, player] of Object.entries(room.players || {})) {
+        if (player.ownerUid !== staleUid) continue;
+        const playerRef = services.databaseSdk.ref(
+          services.database,
+          `rooms/${roomId}/players/${playerId}`,
+        );
+        await services.databaseSdk.runTransaction(playerRef, (current) => {
+          if (current?.ownerUid !== staleUid) return;
+          return { ...current, ownerUid: null };
+        }, { applyLocally: false });
+      }
+    }
+  } finally {
+    staleCleanupInFlight = false;
+  }
 }
 
 export async function createRoom(config, palette) {

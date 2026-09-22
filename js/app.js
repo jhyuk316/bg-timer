@@ -7,6 +7,7 @@ import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/m
 import { normalizeRoomCode } from './multiplayer/room-code.js';
 import {
   createRoom,
+  cleanupStaleLobbyParticipants,
   joinRoom as joinMultiplayerRoom,
   restoreRoom,
   setPlayerOwner,
@@ -218,6 +219,9 @@ function enterLobby(session) {
       return;
     }
     multiplayerRoom = room;
+    if (room.status === 'lobby' && room.hostUid === session.uid) {
+      cleanupStaleLobbyParticipants(session.roomId, room).catch(() => {});
+    }
     if (room.status === 'playing' && room.game) {
       showMultiplayerGame();
     } else if (room.status === 'ended' && room.game) {
@@ -238,6 +242,7 @@ function showLobby() {
   const uid = multiplayerSession.uid;
   renderLobbyScreen(appEl, multiplayerRoom, {
     uid,
+    now: getServerNow(),
     self: multiplayerRoom.participants?.[uid],
     isHost: multiplayerRoom.hostUid === uid,
     error: multiplayerError,

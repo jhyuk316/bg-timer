@@ -1,4 +1,17 @@
-import { MAX_PLAYERS, MIN_PLAYERS } from './constants.js';
+import { LOBBY_STALE_MS, MAX_PLAYERS, MIN_PLAYERS } from './constants.js';
+
+export function isParticipantPresent(participant, now = Date.now()) {
+  return Boolean(participant && (!participant.lastSeenAt || now - participant.lastSeenAt < LOBBY_STALE_MS));
+}
+
+export function getStaleLobbyParticipantUids(room, now = Date.now()) {
+  if (room?.status !== 'lobby') return [];
+  return Object.entries(room.participants || {})
+    .filter(([uid, participant]) => uid !== room.hostUid
+      && participant.lastSeenAt
+      && now - participant.lastSeenAt >= LOBBY_STALE_MS)
+    .map(([uid]) => uid);
+}
 
 export function getSelectedPlayers(room) {
   return Object.entries(room?.players || {})
@@ -26,15 +39,19 @@ export function createInitialRoom({ hostUid, config, palette, createdAt }) {
   };
 }
 
-export function canStartGame(room) {
+export function canStartGame(room, now = Date.now()) {
   if (!room || room.status !== 'lobby') return false;
 
-  const selectedCount = getSelectedPlayers(room).length;
+  const selectedPlayers = getSelectedPlayers(room);
+  const selectedCount = selectedPlayers.length;
   if (selectedCount < MIN_PLAYERS || selectedCount > MAX_PLAYERS) return false;
 
-  const participants = Object.values(room.participants || {});
-  return participants.some((participant) => participant.connected)
-    && participants.every((participant) => !participant.connected || participant.ready === true);
+  const participants = Object.entries(room.participants || {})
+    .filter(([, participant]) => isParticipantPresent(participant, now));
+  const presentUids = new Set(participants.map(([uid]) => uid));
+  return participants.length > 0
+    && selectedPlayers.every(([, player]) => presentUids.has(player.ownerUid))
+    && participants.every(([, participant]) => participant.ready === true);
 }
 
 export function canEditPlayer(room, uid, playerId) {
