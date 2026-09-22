@@ -32,8 +32,9 @@ async function connectPresence(roomId) {
   );
   const connectedRef = services.databaseSdk.ref(services.database, '.info/connected');
   let heartbeat = null;
+  let active = true;
 
-  const updatePresence = () => services.databaseSdk.update(participantRef, {
+  const updatePresence = () => active && services.databaseSdk.update(participantRef, {
     connected: true,
     lastSeenAt: getServerNow(),
   });
@@ -42,6 +43,7 @@ async function connectPresence(roomId) {
   };
 
   const unsubscribe = services.databaseSdk.onValue(connectedRef, async (snapshot) => {
+    if (!active) return;
     if (snapshot.val() !== true) {
       clearInterval(heartbeat);
       heartbeat = null;
@@ -49,13 +51,16 @@ async function connectPresence(roomId) {
     }
     const disconnected = services.databaseSdk.onDisconnect(participantRef);
     await disconnected.update({ connected: false });
+    if (!active) return;
     await updatePresence();
+    if (!active) return;
     clearInterval(heartbeat);
     heartbeat = setInterval(() => updatePresence().catch(() => {}), PRESENCE_HEARTBEAT_MS);
   });
   globalThis.addEventListener?.('pagehide', markLeaving);
 
   presenceCleanup = () => {
+    active = false;
     unsubscribe();
     clearInterval(heartbeat);
     globalThis.removeEventListener?.('pagehide', markLeaving);
@@ -276,19 +281,29 @@ export async function leaveRoom(roomId) {
   const roomRef = services.databaseSdk.ref(services.database, `rooms/${roomId}`);
   const snapshot = await services.databaseSdk.get(roomRef);
   const room = snapshot.val();
+  if (room?.status !== 'lobby') throw new Error('게임 중에는 방에서 나갈 수 없습니다.');
 
-  for (const [playerId, player] of Object.entries(room?.players || {})) {
-    if (player.ownerUid === uid) {
-      await services.databaseSdk.update(
-        services.databaseSdk.ref(services.database, `rooms/${roomId}/players/${playerId}`),
-        { ownerUid: null },
-      );
+  if (room.hostUid === uid) {
+    await services.databaseSdk.update(
+      services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
+      { connected: false, ready: false },
+    );
+  } else {
+    for (const [playerId, player] of Object.entries(room?.players || {})) {
+      if (player.ownerUid === uid) {
+        await services.databaseSdk.update(
+          services.databaseSdk.ref(services.database, `rooms/${roomId}/players/${playerId}`),
+          { ownerUid: null },
+        );
+      }
     }
+    await services.databaseSdk.remove(
+      services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
+    );
   }
-
-  await services.databaseSdk.remove(
-    services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
-  );
   presenceCleanup?.();
+  await services.databaseSdk.onDisconnect(
+    services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${uid}`),
+  ).cancel();
   clearRoomSession();
 }

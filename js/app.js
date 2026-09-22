@@ -8,6 +8,7 @@ import { normalizeRoomCode } from './multiplayer/room-code.js';
 import {
   createRoom,
   cleanupStaleLobbyParticipants,
+  leaveRoom,
   joinRoom as joinMultiplayerRoom,
   restoreRoom,
   setPlayerOwner,
@@ -258,6 +259,24 @@ function showLobby() {
     },
     async startGame() {
       await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));
+    },
+    async leaveRoom() {
+      try {
+        await leaveRoom(multiplayerSession.roomId);
+        unsubscribeRoom?.();
+        unsubscribeRoom = null;
+        multiplayerSession = null;
+        multiplayerRoom = null;
+        multiplayerError = '';
+        const url = new URL(location.href);
+        url.searchParams.delete('r');
+        url.searchParams.delete('room');
+        history.replaceState(null, '', url);
+        showScreen('settings');
+      } catch (error) {
+        multiplayerError = error.message || '방에서 나가지 못했습니다.';
+        showLobby();
+      }
     },
   });
   restoreGlobalBar();

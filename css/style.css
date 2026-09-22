@@ -653,6 +653,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .participant-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ready-state { margin-left: auto; color: var(--text-dim); white-space: nowrap; }
 .ready-state.ready { color: var(--success); }
+.lobby-leave { margin-top: 0.75rem; padding: 0.4rem 0.6rem; font-size: 0.75rem; }
 .lobby-title-row { display: flex; align-items: center; min-height: 34px; flex-shrink: 0; }
 .lobby-title { font-size: 1rem; }
 .lobby-player-grid {

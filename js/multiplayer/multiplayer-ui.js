@@ -105,6 +105,10 @@ export function renderLobbyScreen(container, room, context, callbacks) {
     participantList.appendChild(row);
   }
   left.appendChild(participantList);
+  const leaveButton = el('button', 'btn-secondary lobby-leave', '방 나가기');
+  leaveButton.type = 'button';
+  leaveButton.addEventListener('click', callbacks.leaveRoom);
+  left.appendChild(leaveButton);
 
   const titleRow = el('div', 'lobby-title-row');
   titleRow.appendChild(el('h1', 'lobby-title', `플레이어 ${getSelectedPlayers(room).length}/6`));
