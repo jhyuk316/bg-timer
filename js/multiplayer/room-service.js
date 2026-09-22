@@ -23,14 +23,19 @@ function clearRoomSession() {
 }
 
 export async function forgetRoom(roomId) {
+  await stopRoomPresence(roomId);
+  clearRoomSession();
+}
+
+export async function stopRoomPresence(roomId) {
   presenceCleanup?.();
   try {
     const services = await getFirebaseServices();
     await services.databaseSdk.onDisconnect(
       services.databaseSdk.ref(services.database, `rooms/${roomId}/participants/${getClientUid()}`),
     ).cancel();
-  } finally {
-    clearRoomSession();
+  } catch {
+    // The room session remains available for a later reconnect.
   }
 }
 

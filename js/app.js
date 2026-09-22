@@ -4,7 +4,7 @@ import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
 import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/multiplayer-ui.js';
-import { normalizeRoomCode } from './multiplayer/room-code.js';
+import { formatRoomCode, normalizeRoomCode } from './multiplayer/room-code.js';
 import {
   createRoom,
   cleanupStaleLobbyParticipants,
@@ -12,6 +12,7 @@ import {
   leaveRoom,
   joinRoom as joinMultiplayerRoom,
   restoreRoom,
+  stopRoomPresence,
   setPlayerOwner,
   setReady as setMultiplayerReady,
   subscribeRoom,
@@ -24,7 +25,7 @@ import {
   startMultiplayerGame,
 } from './multiplayer/game-service.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
-import { getServerNow } from './multiplayer/firebase-client.js';
+import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -42,8 +43,20 @@ let unsubscribeRoom = null;
 let multiplayerFrame = null;
 let lastHistoryBase = null;
 let multiplayerLeaving = false;
+let lastGameRenderKey = null;
+let multiplayerConnected = true;
+let unsubscribeConnection = null;
+
+function updateGameConnection() {
+  const connection = document.getElementById('game-connection');
+  if (!connection) return;
+  connection.textContent = multiplayerConnected ? '연결됨' : '재연결 중';
+  connection.classList.toggle('offline', !multiplayerConnected);
+}
 
 function returnToMultiplayerEntry(message = '') {
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
   unsubscribeRoom?.();
   unsubscribeRoom = null;
   multiplayerSession = null;
@@ -227,6 +240,20 @@ function enterLobby(session) {
   multiplayerSession = session;
   multiplayerRoom = null;
   multiplayerError = '';
+  lastGameRenderKey = null;
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
+  multiplayerConnected = true;
+  subscribeConnection((connected) => {
+    multiplayerConnected = connected;
+    updateGameConnection();
+  }).then((unsubscribe) => {
+    if (multiplayerSession?.roomId === session.roomId) unsubscribeConnection = unsubscribe;
+    else unsubscribe();
+  }).catch(() => {
+    multiplayerConnected = false;
+    updateGameConnection();
+  });
   unsubscribeRoom?.();
   unsubscribeRoom = subscribeRoom(session.roomId, (room) => {
     if (!room) {
@@ -246,7 +273,15 @@ function enterLobby(session) {
       cleanupStaleLobbyParticipants(session.roomId, room).catch(() => {});
     }
     if (room.status === 'playing' && room.game) {
-      showMultiplayerGame();
+      const renderKey = JSON.stringify({
+        revision: room.game.revision,
+        players: Object.values(room.players || {}).map((player) => player.ownerUid),
+        connected: Object.entries(room.participants || {}).map(([uid, participant]) => [uid, participant.connected]),
+      });
+      if (currentScreen !== 'game' || renderKey !== lastGameRenderKey) {
+        lastGameRenderKey = renderKey;
+        showMultiplayerGame();
+      }
     } else if (room.status === 'ended' && room.game) {
       finishMultiplayerGame();
     } else {
@@ -255,6 +290,10 @@ function enterLobby(session) {
   }, (error) => {
     multiplayerError = error.message || '방 연결이 끊겼습니다.';
     if (currentScreen === 'lobby') showLobby();
+    if (currentScreen === 'game') {
+      multiplayerConnected = false;
+      updateGameConnection();
+    }
   });
   currentScreen = 'lobby';
   appEl.innerHTML = '<div class="multi-loading">방에 연결하는 중...</div>';
@@ -340,6 +379,8 @@ function showMultiplayerGame() {
     players,
   }, {
     showEndControl: multiplayerRoom.hostUid === multiplayerSession.uid,
+    roomCode: formatRoomCode(multiplayerRoom.code),
+    connected: multiplayerConnected,
   });
   updateGameUI(toMultiplayerUiState(view));
 
@@ -363,15 +404,32 @@ function showMultiplayerGame() {
 async function runMultiplayerGameAction(action) {
   try {
     await action();
+    multiplayerError = '';
+    document.getElementById('multi-game-error')?.remove();
   } catch (error) {
-    multiplayerError = error.message || '게임 상태를 갱신하지 못했습니다.';
+    multiplayerError = error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')
+      ? '턴을 저장하지 못했습니다. 방 연결 또는 Firebase 권한을 확인해주세요.'
+      : error.message || '게임 상태를 갱신하지 못했습니다.';
+    let errorEl = document.getElementById('multi-game-error');
+    if (!errorEl) {
+      errorEl = document.createElement('div');
+      errorEl.id = 'multi-game-error';
+      errorEl.className = 'multi-error multi-game-error';
+      appEl.appendChild(errorEl);
+    }
+    errorEl.textContent = multiplayerError;
   }
 }
 
 function finishMultiplayerGame() {
   if (!multiplayerRoom?.game?.endedAt) return;
+  unsubscribeRoom?.();
+  unsubscribeRoom = null;
+  stopRoomPresence(multiplayerSession.roomId).catch(() => {});
   if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
   multiplayerFrame = null;
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
   lastStats = buildMultiplayerStats(multiplayerRoom);
   lastHistoryBase = {
     players: lastStats.players,

@@ -260,8 +260,16 @@ export function renderGameScreen(container, gameState, settings, options = {}) {
   container.innerHTML = '';
 
   // Top bar
-  const refBar = el('div', 'referee-bar');
+  const refBar = el('div', `referee-bar${options.roomCode ? ' multiplayer' : ''}`);
   refBar.id = 'referee-bar';
+  if (options.roomCode) {
+    const roomMeta = el('div', 'game-room-meta');
+    roomMeta.appendChild(el('span', '', options.roomCode));
+    const connection = el('span', 'game-connection', options.connected ? '연결됨' : '재연결 중');
+    connection.id = 'game-connection';
+    roomMeta.appendChild(connection);
+    refBar.appendChild(roomMeta);
+  }
 
   // Left: referee section (visible only when referee active)
   const refSection = el('div', 'referee-section');

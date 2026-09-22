@@ -2,7 +2,7 @@
 
 Run these cases in Firebase Console > Realtime Database > Rules Playground before publishing `database.rules.json`.
 
-Status: Pending console verification.
+Status: First-turn case reproduced as denied against deployed rules on 2026-09-23. Revised rules and remaining cases pending console verification.
 
 | Case | Auth | Path | Method | Expected |
 |---|---|---|---|---|
@@ -18,6 +18,7 @@ Status: Pending console verification.
 | Guest claims an empty player | guest UID | `/rooms/room_test/players/p1` | update owner to guest | allow |
 | Guest cannot take another guest's player | guest UID | `/rooms/room_test/players/p2` | update owner | deny |
 | Joined guest switches any active player | guest UID | `/rooms/room_test/game` | transaction-shaped set, revision +1 | allow |
+| Existing start event remains unchanged during first turn | guest UID | `/rooms/room_test/game` | append `r2` turn while preserving `r1` fields | allow |
 | Guest can return an active player to operational time | guest UID | `/rooms/room_test/game` | append `referee`, revision +1 | allow |
 | Existing event cannot be rewritten | joined UID | `/rooms/room_test/game/events/r1` | change timestamp or actor | deny |
 | Game rejects unknown event fields | joined UID | `/rooms/room_test/game` | append event with arbitrary field | deny |
