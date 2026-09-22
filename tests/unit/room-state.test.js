@@ -49,21 +49,21 @@ test('requires every connected participant to be ready', () => {
   assert.equal(canStartGame(makeRoom({ guestReady: false })), false);
   const room = makeRoom({ guestReady: false, guestConnected: false });
   room.participants.guest.lastSeenAt = 1_000;
-  assert.equal(canStartGame(room, 16_000), true);
+  assert.equal(canStartGame(room, 4_000), true);
 });
 
-test('removes a lobby guest from presence after fifteen seconds', () => {
+test('removes a lobby guest from presence after three seconds', () => {
   const room = makeRoom({ playerCount: 2, guestReady: false });
   room.participants.host.lastSeenAt = 20_000;
   room.participants.guest.lastSeenAt = 1_000;
 
-  assert.equal(isParticipantPresent(room.participants.guest, 15_999), true);
-  assert.equal(isParticipantPresent(room.participants.guest, 16_000), false);
-  assert.deepEqual(getStaleLobbyParticipantUids(room, 16_000), ['guest']);
-  assert.equal(canStartGame(room, 16_000), false);
+  assert.equal(isParticipantPresent(room.participants.guest, 3_999), true);
+  assert.equal(isParticipantPresent(room.participants.guest, 4_000), false);
+  assert.deepEqual(getStaleLobbyParticipantUids(room, 4_000), ['guest']);
+  assert.equal(canStartGame(room, 4_000), false);
 
   room.players.p1.ownerUid = null;
-  assert.equal(canStartGame(room, 16_000), true);
+  assert.equal(canStartGame(room, 4_000), true);
   room.status = 'playing';
   assert.deepEqual(getStaleLobbyParticipantUids(room, 100_000), []);
 });
