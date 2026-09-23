@@ -1,28 +1,28 @@
-# Multiplayer MVP Acceptance Check (2026-09-24)
+# 멀티플레이 MVP 인수테스트 (2026-09-24)
 
-## Result
+## 결과
 
-Local two-browser acceptance and deployed Firebase rules checks passed. Release acceptance is **pending** a two-phone test on separate networks after the feature is published to the public GitHub Pages origin. Localhost QR links cannot serve that test.
+로컬 브라우저 2개를 이용한 인수테스트와 배포된 Firebase 보안 규칙 검사는 통과했다. 다만 **전체 인수 완료는 보류**한다. 기능을 공개 GitHub Pages 주소에 게시한 뒤, 서로 다른 네트워크에 연결된 휴대폰 2대로 확인해야 한다. 로컬 주소가 담긴 QR 코드는 이 검증에 사용할 수 없다.
 
-## Passed
+## 통과한 항목
 
-- Two-browser lobby: host created a six-digit room, guest joined, selected a player, and both became ready.
-- Four-player game: host owned three players and guest owned one. Guest operated a host-owned tile; host operated a guest-owned tile. Tapping the active tile returned to operational time.
-- Guest browser closed during play. Host continued operating tiles; guest reopened the same origin and recovered the current room, turn, and totals.
-- Host ended the game. Both browsers showed matching four-player statistics; only host local history gained the record.
-- Six-player game: all six player tiles remained in one row at emulated iPhone 16 (852x393) and Galaxy S24 (824x384) landscape viewports. Guest turn changes appeared on host. End statistics matched, and only host history gained the record.
-- Lobby disconnect: a closed guest tab disappeared from the participant count and released its claimed player after the stale-presence window. Host exit closed the room; its code then returned "room not found" to a new guest.
-- Firebase unavailable at startup: single-player game still started; multiplayer creation showed a network error.
-- Deployed Realtime Database rules: 30/30 opt-in live REST checks passed, including unauthorized access, ownership, configuration, turn-event integrity, and host-only start/end.
-- Automated tests: 22/22 unit tests passed. JavaScript syntax and `git diff --check` passed.
-- Static checks: multiplayer timer display derives locally from saved events and server time, without a per-second turn write; no multiplayer pause control/state; service worker includes multiplayer assets.
+- 브라우저 2개로 대기실을 확인했다. 방장이 6자리 방을 만들고 게스트가 참가해 말을 선택했으며, 두 사람 모두 준비 완료 상태가 됐다.
+- 4인 게임에서 방장이 말 3개, 게스트가 말 1개를 선택했다. 게스트는 방장 소유의 말을, 방장은 게스트 소유의 말을 조작했다. 진행 중인 말을 다시 누르면 운영 시간으로 돌아갔다.
+- 게임 중 게스트 브라우저를 닫아도 방장은 계속 말을 조작할 수 있었다. 게스트가 같은 주소로 다시 접속하자 기존 방, 현재 턴, 누적 시간이 복원됐다.
+- 방장이 게임을 종료한 뒤 두 브라우저에 같은 4인 통계가 표시됐다. 로컬 플레이 기록은 방장에게만 추가됐다.
+- 6인 게임에서 말 6개가 가로 한 줄에 유지됐다. iPhone 16(852x393)과 Galaxy S24(824x384)를 본뜬 가로 화면 크기에서 겹침 없이 표시됐고, 게스트의 턴 조작이 방장 화면에도 반영됐다. 종료 통계가 일치했으며 방장에게만 기록이 추가됐다.
+- 대기실에서 게스트 탭을 닫자 연결 만료 판정 후 참가자 수가 줄고 선택한 말이 해제됐다. 방장이 방을 나간 뒤에는 같은 코드로 재입장할 수 없었다.
+- Firebase 연결을 시작할 수 없는 환경에서도 싱글 게임은 시작됐다. 멀티 방 만들기에는 네트워크 오류가 표시됐다.
+- 배포된 Realtime Database 보안 규칙을 대상으로 한 실제 REST 검사 30개가 모두 통과했다. 인증되지 않은 접근, 말 소유권, 설정 변경 권한, 턴 이벤트 무결성, 방장 전용 시작·종료를 포함한다.
+- 단위 테스트 22개, JavaScript 문법 검사, `git diff --check`가 모두 통과했다.
+- 코드 확인 결과 멀티 타이머는 저장된 이벤트와 서버 시간을 바탕으로 각 기기에서 표시 시간을 계산한다. 턴 시간을 매초 Firebase에 쓰지 않으며, 멀티 일시정지 기능은 없다. 서비스 워커의 자산 목록에는 멀티 기능 파일이 포함돼 있다.
 
-## Pending Release Checks
+## 출시 전 남은 확인
 
-- Publish the feature on the public GitHub Pages origin. It is currently on `codex/multiplayer-mvp`, not `main`.
-- On an actual iPhone Safari and Android Chrome, use different Wi-Fi/LTE networks. Create a room, scan the QR code, join, claim players, ready/start, take turns from both devices, disconnect/reconnect one device, end, and compare both statistics screens.
-- Check portrait guidance, safe areas, real touch targets, PWA update behavior, and phone sleep/background recovery on those devices. Landscape browser viewport emulation is not a substitute for these checks.
-- Confirm the QR encodes the public origin and the six-digit room code. The local QR was not camera-scanned in this run.
-- Simulate an in-game Firebase outage and restoration on a device to verify the reconnecting indicator and retained last confirmed view; only startup failure and browser close/reopen were exercised here.
+- 기능을 공개 GitHub Pages 주소에 게시한다. 현재 기능은 `main`이 아닌 `codex/multiplayer-mvp` 브랜치에 있다.
+- 실제 iPhone Safari와 Android Chrome을 서로 다른 Wi-Fi/LTE 네트워크에 연결해 방 생성, QR 스캔, 참가, 말 선택, 준비·시작, 양쪽 기기에서의 턴 조작, 연결 종료·재접속, 게임 종료, 양쪽 통계 일치를 확인한다.
+- 실기기에서 세로 화면 안내, 화면 안전 영역, 터치 영역, PWA 업데이트, 휴대폰 잠금·백그라운드 복귀를 확인한다. 브라우저의 가로 화면 크기 모의 설정만으로는 이를 대신할 수 없다.
+- QR 코드에 공개 사이트 주소와 6자리 방 코드가 담겼는지 확인한다. 이번 검사에서는 로컬 QR 코드를 카메라로 스캔하지 않았다.
+- 게임 중 Firebase 연결을 끊었다가 복구해 재연결 표시와 마지막으로 확정된 화면이 유지되는지 확인한다. 이번에는 시작 시 연결 실패와 브라우저 종료·재접속만 검사했다.
 
-The MVP is browser-tested, but these pending items keep the full acceptance test open.
+브라우저에서의 MVP 동작은 확인했지만, 위 항목이 남아 있어 전체 인수테스트는 아직 완료되지 않았다.
