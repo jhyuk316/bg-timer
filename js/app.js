@@ -411,13 +411,49 @@ function showMultiplayerGame() {
   document.getElementById('referee-bar')?.addEventListener('click', () => runMultiplayerGameAction(
     () => enterOperationalTime(multiplayerSession.roomId),
   ));
-  document.getElementById('btn-end')?.addEventListener('click', async () => {
-    if (confirm('게임을 종료할까요?')) {
-      await runMultiplayerGameAction(() => endMultiplayerGame(multiplayerSession.roomId));
-    }
-  });
+  document.getElementById('btn-end')?.addEventListener('click', () => showMultiplayerEndConfirmation());
   restoreGlobalBar();
   multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
+}
+
+function showMultiplayerEndConfirmation() {
+  if (document.getElementById('multi-end-confirm')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'multi-end-confirm';
+  overlay.className = 'multi-confirm-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', '게임 종료 확인');
+  const panel = document.createElement('div');
+  panel.className = 'multi-confirm-panel';
+  const question = document.createElement('p');
+  question.textContent = '게임을 종료할까요?';
+  const actions = document.createElement('div');
+  actions.className = 'multi-confirm-actions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'btn-secondary';
+  cancel.textContent = '취소';
+  const confirmEnd = document.createElement('button');
+  confirmEnd.type = 'button';
+  confirmEnd.className = 'btn-primary';
+  confirmEnd.textContent = '게임 종료';
+  const dismiss = () => overlay.remove();
+  cancel.addEventListener('click', dismiss);
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) dismiss();
+  });
+  confirmEnd.addEventListener('click', async () => {
+    confirmEnd.disabled = true;
+    cancel.disabled = true;
+    await runMultiplayerGameAction(() => endMultiplayerGame(multiplayerSession.roomId));
+    dismiss();
+  });
+  actions.append(cancel, confirmEnd);
+  panel.append(question, actions);
+  overlay.appendChild(panel);
+  appEl.appendChild(overlay);
+  cancel.focus();
 }
 
 async function runMultiplayerGameAction(action) {
