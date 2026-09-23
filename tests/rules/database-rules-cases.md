@@ -2,7 +2,7 @@
 
 Run these cases in Firebase Console > Realtime Database > Rules Playground before publishing `database.rules.json`.
 
-Status: First-turn case reproduced as denied against deployed rules on 2026-09-23. Revised rules and remaining cases pending console verification.
+Status (2026-09-23): First-turn case reproduced as denied against the old deployed rules. The revised immutable-event rule was published with user approval. A fresh two-client room then started and accepted turn writes from both host and guest; both clients showed the same active turn. The rest of this matrix has not been checked in Rules Playground.
 
 | Case | Auth | Path | Method | Expected |
 |---|---|---|---|---|

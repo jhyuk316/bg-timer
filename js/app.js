@@ -25,6 +25,7 @@ import {
   startMultiplayerGame,
 } from './multiplayer/game-service.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
+import { isParticipantPresent } from './multiplayer/room-state.js';
 import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
 
 const appEl = document.getElementById('app');
@@ -44,6 +45,7 @@ let multiplayerFrame = null;
 let lastHistoryBase = null;
 let multiplayerLeaving = false;
 let lastGameRenderKey = null;
+let lastLobbyRenderKey = null;
 let multiplayerConnected = true;
 let unsubscribeConnection = null;
 
@@ -241,6 +243,7 @@ function enterLobby(session) {
   multiplayerRoom = null;
   multiplayerError = '';
   lastGameRenderKey = null;
+  lastLobbyRenderKey = null;
   unsubscribeConnection?.();
   unsubscribeConnection = null;
   multiplayerConnected = true;
@@ -285,7 +288,23 @@ function enterLobby(session) {
     } else if (room.status === 'ended' && room.game) {
       finishMultiplayerGame();
     } else {
-      showScreen('lobby');
+      const now = getServerNow();
+      const renderKey = JSON.stringify({
+        players: room.players,
+        config: room.config,
+        participants: Object.entries(room.participants || {}).map(([uid, participant]) => [
+          uid,
+          participant.role,
+          participant.ready,
+          participant.connected,
+          isParticipantPresent(participant, now),
+        ]),
+        error: multiplayerError,
+      });
+      if (currentScreen !== 'lobby' || renderKey !== lastLobbyRenderKey) {
+        lastLobbyRenderKey = renderKey;
+        showScreen('lobby');
+      }
     }
   }, (error) => {
     multiplayerError = error.message || '방 연결이 끊겼습니다.';
