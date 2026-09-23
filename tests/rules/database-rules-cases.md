@@ -1,8 +1,8 @@
 # Realtime Database Rules Cases
 
-Run these cases in Firebase Console > Realtime Database > Rules Playground before publishing `database.rules.json`.
+These cases can be checked in Firebase Console > Realtime Database > Rules Playground. The opt-in `live-rules.mjs` script also exercises them against the deployed rules with anonymous Firebase users.
 
-Status (2026-09-23): First-turn case reproduced as denied against the old deployed rules. The revised immutable-event rule was published with user approval. A fresh two-client room then started and accepted turn writes from both host and guest; both clients showed the same active turn. The rest of this matrix has not been checked in Rules Playground.
+Status (2026-09-24): The revised rules were deployed with user approval. `BG_TIMER_LIVE_RULES=1 node tests/rules/live-rules.mjs` passed 30/30 live REST checks against `bg-timer-1b7ad`, including every case below. This is live-rule verification, not a Rules Playground run. The script creates anonymous test users and a temporary room, removes its code, and marks the room ended afterward.
 
 | Case | Auth | Path | Method | Expected |
 |---|---|---|---|---|
