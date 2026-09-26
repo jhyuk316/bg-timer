@@ -4,6 +4,8 @@
 
 검사 상태(2026-09-24): 수정한 규칙을 사용자 승인 후 배포했다. `BG_TIMER_LIVE_RULES=1 node tests/rules/live-rules.mjs`로 `bg-timer-1b7ad`의 실제 규칙을 검사한 결과 30개 중 30개가 통과했으며, 아래 항목을 모두 포함한다. 이는 실제 규칙에 대한 검사 결과이며 Rules Playground에서 실행한 결과는 아니다. 스크립트는 익명 테스트 사용자와 임시 방을 만든 뒤 방 코드를 삭제하고 방 상태를 종료로 바꾼다.
 
+자리 이동 관련 마지막 5개 항목은 2026-09-27에 추가했다. 새 규칙을 배포한 뒤 실제 프로젝트에서 재검사해야 한다.
+
 | 검사 항목 | 인증 주체 | 경로 | 작업 | 기대 결과 |
 |---|---|---|---|---|
 | 비로그인 사용자는 방 코드를 읽을 수 없음 | 없음 | `/roomCodes/123456` | 읽기 | 거부 |
@@ -28,3 +30,8 @@
 | 게스트는 게임을 종료할 수 없음 | 게스트 UID | `/rooms/room_test/game` | 종료 상태로 저장 | 거부 |
 | 방장은 게임을 종료할 수 있음 | 방장 UID | `/rooms/room_test/game` | 종료 상태로 저장, 리비전 1 증가 | 허용 |
 | 리비전을 건너뛸 수 없음 | 방장 UID | `/rooms/room_test/game` | 리비전 2 증가와 함께 저장 | 거부 |
+| 대기실에서는 자리 순서를 바꿀 수 없음 | 게스트 UID | `/rooms/room_test/playerOrder` | 저장 | 거부 |
+| 참가한 게스트는 게임 중 자리 순서를 바꿀 수 있음 | 게스트 UID | `/rooms/room_test/playerOrder` | 유효한 순서 저장 | 허용 |
+| 외부인은 자리 순서를 바꿀 수 없음 | 외부인 UID | `/rooms/room_test/playerOrder` | 저장 | 거부 |
+| 잘못된 자리 순서는 저장할 수 없음 | 게스트 UID | `/rooms/room_test/playerOrder` | 잘못된 형식 저장 | 거부 |
+| 종료된 게임의 자리 순서는 바꿀 수 없음 | 게스트 UID | `/rooms/room_test/playerOrder` | 저장 | 거부 |

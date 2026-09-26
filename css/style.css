@@ -465,6 +465,10 @@ button:disabled { opacity: 0.4; cursor: default; }
   overflow: hidden;
   gap: 0.15rem;
 }
+.multiplayer-seats .player-area {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
 .player-area.active {
   background: color-mix(in srgb, var(--player-color) 25%, var(--surface));
   box-shadow: inset 0 0 0 3px var(--player-color);
