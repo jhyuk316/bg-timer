@@ -22,8 +22,10 @@ import {
   endMultiplayerGame,
   enterOperationalTime,
   selectMultiplayerPlayer,
+  swapMultiplayerPlayerOrder,
   startMultiplayerGame,
 } from './multiplayer/game-service.js';
+import { bindSeatDrag } from './multiplayer/seat-drag.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
 import { isParticipantPresent } from './multiplayer/room-state.js';
 import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
@@ -278,6 +280,7 @@ function enterLobby(session) {
     if (room.status === 'playing' && room.game) {
       const renderKey = JSON.stringify({
         revision: room.game.revision,
+        playerOrder: room.playerOrder,
         players: Object.values(room.players || {}).map((player) => player.ownerUid),
         connected: Object.entries(room.participants || {}).map(([uid, participant]) => [uid, participant.connected]),
       });
@@ -408,6 +411,14 @@ function showMultiplayerGame() {
       () => selectMultiplayerPlayer(multiplayerSession.roomId, view.players[index].id),
     ));
   });
+  bindSeatDrag(document.getElementById('player-grid'), (sourceIndex, targetIndex) => (
+    runMultiplayerGameAction(() => swapMultiplayerPlayerOrder(
+      multiplayerSession.roomId,
+      view.players[Number(sourceIndex)].id,
+      view.players[Number(targetIndex)].id,
+      multiplayerRoom,
+    ))
+  ));
   document.getElementById('referee-bar')?.addEventListener('click', () => runMultiplayerGameAction(
     () => enterOperationalTime(multiplayerSession.roomId),
   ));

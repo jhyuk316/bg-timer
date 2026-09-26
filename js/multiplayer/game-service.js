@@ -6,6 +6,7 @@ import {
   createTurnEvent,
 } from './game-state.js';
 import { canStartGame } from './room-state.js';
+import { swappedPlayerOrder } from './player-order.js';
 
 async function loadRoom(services, roomId) {
   const roomRef = services.databaseSdk.ref(services.database, `rooms/${roomId}`);
@@ -51,6 +52,16 @@ export async function selectMultiplayerPlayer(roomId, playerId) {
 
 export function enterOperationalTime(roomId) {
   return updateGame(roomId, (game, uid, at) => createOperationalEvent(game, uid, at));
+}
+
+export async function swapMultiplayerPlayerOrder(roomId, sourceId, targetId, room) {
+  if (room.status !== 'playing') throw new Error('진행 중인 게임이 아닙니다.');
+  const services = await getFirebaseServices();
+  const orderRef = services.databaseSdk.ref(services.database, `rooms/${roomId}/playerOrder`);
+  const result = await services.databaseSdk.runTransaction(orderRef, (current) => (
+    swappedPlayerOrder({ ...room, playerOrder: current }, sourceId, targetId)
+  ), { applyLocally: false });
+  if (!result.committed) throw new Error('자리 순서를 변경하지 못했습니다.');
 }
 
 export async function endMultiplayerGame(roomId) {
