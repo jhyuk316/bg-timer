@@ -1,7 +1,10 @@
 const State = { IDLE: 'idle', PLAYER: 'player', REFEREE: 'referee' };
 
-export function createGame(settings) {
+export function createGame(settings, dependencies = {}) {
   const { playerCount, players, turnTime, mainTime, penaltyTime } = settings;
+  const now = dependencies.now || Date.now;
+  const setIntervalFn = dependencies.setIntervalFn || setInterval;
+  const clearIntervalFn = dependencies.clearIntervalFn || clearInterval;
 
   const playerStates = [];
   for (let i = 0; i < playerCount; i++) {
@@ -41,21 +44,21 @@ export function createGame(settings) {
   }
 
   function openTurn(type, player) {
-    const now = Date.now() - game.gameStartTime;
-    game.turnLog.push({ type, player, startMs: now, endMs: null });
+    const elapsed = now() - game.gameStartTime;
+    game.turnLog.push({ type, player, startMs: elapsed, endMs: null });
   }
 
   function closeTurn() {
     const last = game.turnLog[game.turnLog.length - 1];
     if (last && last.endMs === null) {
-      last.endMs = Date.now() - game.gameStartTime;
+      last.endMs = now() - game.gameStartTime;
     }
   }
 
   function tick() {
-    const now = Date.now();
-    const elapsed = now - game.lastTickTime;
-    game.lastTickTime = now;
+    const currentTime = now();
+    const elapsed = currentTime - game.lastTickTime;
+    game.lastTickTime = currentTime;
 
     if (game.state === State.PLAYER) {
       const p = game.playerStates[game.activePlayer];
@@ -101,32 +104,39 @@ export function createGame(settings) {
 
   function startTicking() {
     if (game.intervalId) return;
-    game.lastTickTime = Date.now();
-    game.intervalId = setInterval(tick, 100);
+    game.lastTickTime = now();
+    game.intervalId = setIntervalFn(tick, 100);
   }
 
   function stopTicking() {
     if (game.intervalId) {
-      clearInterval(game.intervalId);
+      clearIntervalFn(game.intervalId);
       game.intervalId = null;
     }
   }
+
+  game.start = () => {
+    if (game.gameStartTime) return;
+    game.gameStartTime = now();
+    game.state = State.REFEREE;
+    game.activePlayer = -1;
+    game.referee.currentLapTime = 0;
+    game.referee.turnCount++;
+    openTurn('referee', -1);
+    startTicking();
+    emit('refereeStart', {});
+  };
 
   game.tapPlayer = (index) => {
     if (index < 0 || index >= playerCount) return;
 
     if (!game.gameStartTime) {
-      game.gameStartTime = Date.now();
+      game.start();
     }
 
-    if (game.state === State.IDLE) {
-      game.activePlayer = index;
-      game.state = State.PLAYER;
-      game.playerStates[index].turnCount++;
-      openTurn('player', index);
-      startTicking();
-      emit('playerStart', { player: index });
-    } else if (game.state === State.PLAYER && game.activePlayer === index) {
+    tick();
+
+    if (game.state === State.PLAYER && game.activePlayer === index) {
       // Same player tap → stop player, start referee
       closeTurn();
       endPlayerTurn(game.activePlayer);
@@ -162,27 +172,6 @@ export function createGame(settings) {
     p.phase = 'turn';
   }
 
-  game.pause = () => {
-    if (game.state === State.IDLE) return;
-    // do a final tick to capture time up to this moment
-    tick();
-    closeTurn();
-    stopTicking();
-    const prevState = game.state;
-    const prevPlayer = game.activePlayer;
-    game.state = State.IDLE;
-    emit('pause', { prevState, prevPlayer });
-  };
-
-  game.resume = (prevState, prevPlayer) => {
-    if (game.state !== State.IDLE || !game.gameStartTime) return;
-    game.state = prevState;
-    game.activePlayer = prevPlayer;
-    openTurn(prevState, prevPlayer);
-    startTicking();
-    emit('resume', {});
-  };
-
   game.reset = () => {
     stopTicking();
     game.state = State.IDLE;
@@ -209,7 +198,7 @@ export function createGame(settings) {
     }
     closeTurn();
     stopTicking();
-    game.gameEndTime = Date.now();
+    game.gameEndTime = now();
     game.state = State.IDLE;
 
     const totalActiveTime = game.playerStates.reduce((sum, p) => sum + p.totalTimeUsed, 0) + game.referee.totalTime;
@@ -260,7 +249,9 @@ export function createGame(settings) {
       game.lastTickTime = game.lastTickTime; // no-op, tick() handles it
     }
   }
-  document.addEventListener('visibilitychange', onVisibilityChange);
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
 
   return game;
 }

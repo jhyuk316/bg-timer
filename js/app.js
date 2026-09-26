@@ -1,25 +1,88 @@
 import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
-import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playPause, playMainWarning, playPenaltyAlert } from './sound.js';
+import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
+import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/multiplayer-ui.js';
+import { formatRoomCode, normalizeRoomCode } from './multiplayer/room-code.js';
+import {
+  createRoom,
+  cleanupStaleLobbyParticipants,
+  forgetRoom,
+  leaveRoom,
+  joinRoom as joinMultiplayerRoom,
+  restoreRoom,
+  stopRoomPresence,
+  setPlayerOwner,
+  setReady as setMultiplayerReady,
+  subscribeRoom,
+  updatePlayerName,
+} from './multiplayer/room-service.js';
+import {
+  endMultiplayerGame,
+  enterOperationalTime,
+  selectMultiplayerPlayer,
+  startMultiplayerGame,
+} from './multiplayer/game-service.js';
+import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
+import { isParticipantPresent } from './multiplayer/room-state.js';
+import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
 let game = null;
-let pausedState = null; // { prevState, prevPlayer }
 let currentScreen = 'settings';
 let settingsPage = 1;
 let lastStats = null;
 let lastSavedGame = null;
+let appMode = 'single';
+let multiplayerSession = null;
+let multiplayerRoom = null;
+let multiplayerError = '';
+let multiplayerLoading = false;
+let unsubscribeRoom = null;
+let multiplayerFrame = null;
+let lastHistoryBase = null;
+let multiplayerLeaving = false;
+let lastGameRenderKey = null;
+let lastLobbyRenderKey = null;
+let multiplayerConnected = true;
+let unsubscribeConnection = null;
+
+function updateGameConnection() {
+  const connection = document.getElementById('game-connection');
+  if (!connection) return;
+  connection.textContent = multiplayerConnected ? '연결됨' : '재연결 중';
+  connection.classList.toggle('offline', !multiplayerConnected);
+}
+
+function returnToMultiplayerEntry(message = '') {
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
+  unsubscribeRoom?.();
+  unsubscribeRoom = null;
+  multiplayerSession = null;
+  multiplayerRoom = null;
+  multiplayerError = message;
+  const url = new URL(location.href);
+  url.searchParams.delete('r');
+  url.searchParams.delete('room');
+  history.replaceState(null, '', url);
+  showScreen('settings');
+}
 
 function showScreen(name) {
+  if (name !== 'game' && multiplayerFrame) {
+    cancelAnimationFrame(multiplayerFrame);
+    multiplayerFrame = null;
+  }
   currentScreen = name;
   switch (name) {
     case 'settings': showSettings(); break;
     case 'game': showGame(); break;
     case 'stats': showStats(); break;
     case 'history': showHistory(); break;
+    case 'lobby': showLobby(); break;
   }
 }
 
@@ -31,13 +94,19 @@ function restoreGlobalBar() {
 // --- Settings ---
 
 function showSettings() {
+  if (appMode === 'multi') {
+    showMultiplayerEntry();
+    return;
+  }
   renderSettingsScreen(appEl, settings, settingsPage, {
+    mode: appMode,
+    setMode,
     toggleMeeple(index) {
       if (settings.activeMeeples[index]) {
         settings.activeMeeples[index] = false;
       } else {
         const activeCount = settings.activeMeeples.filter(Boolean).length;
-        if (activeCount >= 5) return 'max';
+        if (activeCount >= 6) return 'max';
         settings.activeMeeples[index] = true;
       }
       settings.playerCount = settings.activeMeeples.filter(Boolean).length;
@@ -115,6 +184,338 @@ function showSettings() {
   restoreGlobalBar();
 }
 
+function setMode(mode) {
+  appMode = mode;
+  multiplayerError = '';
+  if (mode === 'single') {
+    unsubscribeRoom?.();
+    unsubscribeRoom = null;
+  }
+  showScreen('settings');
+}
+
+function showMultiplayerEntry() {
+  const searchParams = new URLSearchParams(location.search);
+  const queryCode = normalizeRoomCode(searchParams.get('r') || searchParams.get('room') || '');
+  renderMultiplayerEntryScreen(appEl, {
+    code: queryCode ? `${queryCode.slice(0, 3)} ${queryCode.slice(3)}` : '',
+    error: multiplayerError,
+    loading: multiplayerLoading,
+  }, {
+    setMode,
+    async createRoom() {
+      await runMultiplayerAction(async () => {
+        const config = {
+          turnTimeMs: settings.turnTime * 1000,
+          mainTimeMs: settings.mainTime * 1000,
+          penaltyTimeMs: settings.penaltyTime * 1000,
+        };
+        const session = await createRoom(config, COLOR_PALETTE);
+        enterLobby(session);
+      });
+    },
+    async joinRoom(code) {
+      await runMultiplayerAction(async () => {
+        const session = await joinMultiplayerRoom(code);
+        enterLobby(session);
+      });
+    },
+  });
+  restoreGlobalBar();
+}
+
+async function runMultiplayerAction(action) {
+  multiplayerLoading = true;
+  multiplayerError = '';
+  showMultiplayerEntry();
+  try {
+    await action();
+  } catch (error) {
+    multiplayerError = error.message || '요청을 처리하지 못했습니다.';
+  } finally {
+    multiplayerLoading = false;
+    if (currentScreen !== 'lobby') showMultiplayerEntry();
+  }
+}
+
+function enterLobby(session) {
+  multiplayerSession = session;
+  multiplayerRoom = null;
+  multiplayerError = '';
+  lastGameRenderKey = null;
+  lastLobbyRenderKey = null;
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
+  multiplayerConnected = true;
+  subscribeConnection((connected) => {
+    multiplayerConnected = connected;
+    updateGameConnection();
+  }).then((unsubscribe) => {
+    if (multiplayerSession?.roomId === session.roomId) unsubscribeConnection = unsubscribe;
+    else unsubscribe();
+  }).catch(() => {
+    multiplayerConnected = false;
+    updateGameConnection();
+  });
+  unsubscribeRoom?.();
+  unsubscribeRoom = subscribeRoom(session.roomId, (room) => {
+    if (!room) {
+      multiplayerError = '방을 찾을 수 없습니다.';
+      showScreen('settings');
+      return;
+    }
+    multiplayerRoom = room;
+    if (room.status === 'ended' && !room.game) {
+      if (!multiplayerLeaving) {
+        forgetRoom(session.roomId).catch(() => {});
+        returnToMultiplayerEntry('방장이 나가 대기실이 종료되었습니다.');
+      }
+      return;
+    }
+    if (room.status === 'lobby' && room.hostUid === session.uid) {
+      cleanupStaleLobbyParticipants(session.roomId, room).catch(() => {});
+    }
+    if (room.status === 'playing' && room.game) {
+      const renderKey = JSON.stringify({
+        revision: room.game.revision,
+        players: Object.values(room.players || {}).map((player) => player.ownerUid),
+        connected: Object.entries(room.participants || {}).map(([uid, participant]) => [uid, participant.connected]),
+      });
+      if (currentScreen !== 'game' || renderKey !== lastGameRenderKey) {
+        lastGameRenderKey = renderKey;
+        showMultiplayerGame();
+      }
+    } else if (room.status === 'ended' && room.game) {
+      finishMultiplayerGame();
+    } else {
+      const now = getServerNow();
+      const renderKey = JSON.stringify({
+        players: room.players,
+        config: room.config,
+        participants: Object.entries(room.participants || {}).map(([uid, participant]) => [
+          uid,
+          participant.role,
+          participant.ready,
+          participant.connected,
+          isParticipantPresent(participant, now),
+        ]),
+        error: multiplayerError,
+      });
+      if (currentScreen !== 'lobby' || renderKey !== lastLobbyRenderKey) {
+        lastLobbyRenderKey = renderKey;
+        showScreen('lobby');
+      }
+    }
+  }, (error) => {
+    multiplayerError = error.message || '방 연결이 끊겼습니다.';
+    if (currentScreen === 'lobby') showLobby();
+    if (currentScreen === 'game') {
+      multiplayerConnected = false;
+      updateGameConnection();
+    }
+  });
+  currentScreen = 'lobby';
+  appEl.innerHTML = '<div class="multi-loading">방에 연결하는 중...</div>';
+}
+
+function showLobby() {
+  if (!multiplayerSession || !multiplayerRoom) return;
+  const uid = multiplayerSession.uid;
+  renderLobbyScreen(appEl, multiplayerRoom, {
+    uid,
+    now: getServerNow(),
+    self: multiplayerRoom.participants?.[uid],
+    isHost: multiplayerRoom.hostUid === uid,
+    error: multiplayerError,
+  }, {
+    async togglePlayer(playerId, ownerUid) {
+      await runLobbyAction(() => setPlayerOwner(multiplayerSession.roomId, playerId, ownerUid));
+    },
+    async renamePlayer(playerId, name) {
+      await runLobbyAction(() => updatePlayerName(multiplayerSession.roomId, playerId, name));
+    },
+    async setReady(ready) {
+      await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
+    },
+    async startGame() {
+      await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));
+    },
+    async leaveRoom() {
+      multiplayerLeaving = true;
+      try {
+        await leaveRoom(multiplayerSession.roomId);
+        returnToMultiplayerEntry();
+      } catch (error) {
+        multiplayerError = error.message || '방에서 나가지 못했습니다.';
+        showLobby();
+      } finally {
+        multiplayerLeaving = false;
+      }
+    },
+  });
+  restoreGlobalBar();
+}
+
+function multiplayerOwnerLabel(ownerUid) {
+  if (ownerUid === multiplayerSession.uid) return '내 기기';
+  if (ownerUid === multiplayerRoom.hostUid) return '방장 기기';
+  return '게스트 기기';
+}
+
+function toMultiplayerUiState(view) {
+  const activePlayer = view.players.findIndex((player) => player.id === view.activePlayerId);
+  return {
+    state: view.activeType === 'player' ? 'player' : 'referee',
+    activePlayer,
+    playerStates: view.players,
+    referee: view.referee,
+    gameStartTime: view.startedAt,
+    totalActiveTime: view.totalActiveTime,
+  };
+}
+
+function renderMultiplayerTick() {
+  if (currentScreen !== 'game' || appMode !== 'multi' || !multiplayerRoom?.game) return;
+  const view = deriveGameView(multiplayerRoom, getServerNow());
+  updateGameUI(toMultiplayerUiState(view));
+  multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
+}
+
+function showMultiplayerGame() {
+  if (!multiplayerSession || !multiplayerRoom?.game) return;
+  currentScreen = 'game';
+  if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
+
+  const view = deriveGameView(multiplayerRoom, getServerNow());
+  const players = view.players.map((player) => ({
+    name: player.name,
+    color: player.color,
+    ownerLabel: multiplayerOwnerLabel(player.ownerUid),
+    connected: multiplayerRoom.participants?.[player.ownerUid]?.connected !== false,
+  }));
+  renderGameScreen(appEl, toMultiplayerUiState(view), {
+    playerCount: players.length,
+    players,
+  }, {
+    showEndControl: multiplayerRoom.hostUid === multiplayerSession.uid,
+    roomCode: formatRoomCode(multiplayerRoom.code),
+    connected: multiplayerConnected,
+  });
+  updateGameUI(toMultiplayerUiState(view));
+
+  appEl.querySelectorAll('.player-area').forEach((area, index) => {
+    area.addEventListener('click', () => runMultiplayerGameAction(
+      () => selectMultiplayerPlayer(multiplayerSession.roomId, view.players[index].id),
+    ));
+  });
+  document.getElementById('referee-bar')?.addEventListener('click', () => runMultiplayerGameAction(
+    () => enterOperationalTime(multiplayerSession.roomId),
+  ));
+  document.getElementById('btn-end')?.addEventListener('click', () => showMultiplayerEndConfirmation());
+  restoreGlobalBar();
+  multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
+}
+
+function showMultiplayerEndConfirmation() {
+  if (document.getElementById('multi-end-confirm')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'multi-end-confirm';
+  overlay.className = 'multi-confirm-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', '게임 종료 확인');
+  const panel = document.createElement('div');
+  panel.className = 'multi-confirm-panel';
+  const question = document.createElement('p');
+  question.textContent = '게임을 종료할까요?';
+  const actions = document.createElement('div');
+  actions.className = 'multi-confirm-actions';
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'btn-secondary';
+  cancel.textContent = '취소';
+  const confirmEnd = document.createElement('button');
+  confirmEnd.type = 'button';
+  confirmEnd.className = 'btn-primary';
+  confirmEnd.textContent = '게임 종료';
+  const dismiss = () => overlay.remove();
+  cancel.addEventListener('click', dismiss);
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) dismiss();
+  });
+  confirmEnd.addEventListener('click', async () => {
+    confirmEnd.disabled = true;
+    cancel.disabled = true;
+    await runMultiplayerGameAction(() => endMultiplayerGame(multiplayerSession.roomId));
+    dismiss();
+  });
+  actions.append(cancel, confirmEnd);
+  panel.append(question, actions);
+  overlay.appendChild(panel);
+  appEl.appendChild(overlay);
+  cancel.focus();
+}
+
+async function runMultiplayerGameAction(action) {
+  try {
+    await action();
+    multiplayerError = '';
+    document.getElementById('multi-game-error')?.remove();
+  } catch (error) {
+    multiplayerError = error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')
+      ? '턴을 저장하지 못했습니다. 방 연결 또는 Firebase 권한을 확인해주세요.'
+      : error.message || '게임 상태를 갱신하지 못했습니다.';
+    let errorEl = document.getElementById('multi-game-error');
+    if (!errorEl) {
+      errorEl = document.createElement('div');
+      errorEl.id = 'multi-game-error';
+      errorEl.className = 'multi-error multi-game-error';
+      appEl.appendChild(errorEl);
+    }
+    errorEl.textContent = multiplayerError;
+  }
+}
+
+function finishMultiplayerGame() {
+  if (!multiplayerRoom?.game?.endedAt) return;
+  unsubscribeRoom?.();
+  unsubscribeRoom = null;
+  stopRoomPresence(multiplayerSession.roomId).catch(() => {});
+  if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
+  multiplayerFrame = null;
+  unsubscribeConnection?.();
+  unsubscribeConnection = null;
+  lastStats = buildMultiplayerStats(multiplayerRoom);
+  lastHistoryBase = {
+    players: lastStats.players,
+    timerConfig: {
+      presetName: 'Multiplayer',
+      turnTime: multiplayerRoom.config.turnTimeMs / 1000,
+      mainTime: multiplayerRoom.config.mainTimeMs / 1000,
+      penaltyTime: multiplayerRoom.config.penaltyTimeMs / 1000,
+    },
+  };
+
+  const markerKey = `bg-timer-saved-room:${multiplayerSession.roomId}`;
+  const savedId = localStorage.getItem(markerKey);
+  lastSavedGame = savedId ? getHistoryGame(savedId) : null;
+  if (multiplayerRoom.hostUid === multiplayerSession.uid && !lastSavedGame) {
+    lastSavedGame = saveHistory(buildHistoryData(lastStats));
+    localStorage.setItem(markerKey, lastSavedGame.id);
+  }
+  showScreen('stats');
+}
+
+async function runLobbyAction(action) {
+  multiplayerError = '';
+  try {
+    await action();
+  } catch (error) {
+    multiplayerError = error.message || '요청을 처리하지 못했습니다.';
+    showLobby();
+  }
+}
+
 // --- Game ---
 
 function startNewGame() {
@@ -138,9 +539,9 @@ function startNewGame() {
   };
 
   game = createGame(gameSettings);
-  pausedState = null;
   lastStats = null;
   lastSavedGame = null;
+  lastHistoryBase = null;
 
   game.onTick(() => {
     updateGameUI(game.getState());
@@ -164,20 +565,7 @@ function startNewGame() {
         playPenaltyAlert();
         flashScreen();
         break;
-      case 'pause':
-        playPause();
-        pausedState = { prevState: data.prevState, prevPlayer: data.prevPlayer };
-        updatePauseUI(true);
-        updateGameUI(game.getState());
-        break;
-      case 'resume':
-        playTurnStart();
-        pausedState = null;
-        updatePauseUI(false);
-        break;
       case 'reset':
-        pausedState = null;
-        updatePauseUI(false);
         updateGameUI(game.getState());
         break;
     }
@@ -185,6 +573,7 @@ function startNewGame() {
 
   // Reset settings page for next time
   settingsPage = 1;
+  game.start();
   showScreen('game');
 }
 
@@ -227,7 +616,7 @@ function wireGameControls() {
 
   function canDrag() {
     const state = game.getState().state;
-    return pausedState || state === 'referee' || state === 'idle';
+    return state === 'referee' || state === 'idle';
   }
 
   function getPointerPos(e) {
@@ -315,10 +704,6 @@ function wireGameControls() {
     area.addEventListener('click', (e) => {
       if (isDragging) { e.preventDefault(); return; }
       const idx = parseInt(area.dataset.player, 10);
-      if (pausedState) {
-        game.resume(pausedState.prevState, pausedState.prevPlayer);
-        return;
-      }
       game.tapPlayer(idx);
     });
 
@@ -336,21 +721,16 @@ function wireGameControls() {
   grid.addEventListener('mouseup', handlePointerUp);
   grid.addEventListener('mouseleave', endDrag);
 
-  // Pause / End (unified button)
-  document.getElementById('btn-pause').addEventListener('click', () => {
-    if (pausedState) {
-      // Paused → end game
-      if (confirm('게임을 종료할까요?')) {
-        finishGame();
-        showScreen('stats');
-      }
-    } else {
-      game.pause();
+  document.getElementById('btn-end').addEventListener('click', () => {
+    if (confirm('게임을 종료할까요?')) {
+      finishGame();
+      showScreen('stats');
     }
   });
 }
 
 function buildHistoryData(stats, gameName) {
+  if (lastHistoryBase) return { ...lastHistoryBase, gameName, stats };
   return {
     gameName,
     players: stats.players,
@@ -369,23 +749,14 @@ function finishGame() {
   lastSavedGame = saveHistory(buildHistoryData(lastStats));
 }
 
-function updatePauseUI(isPaused) {
-  const btn = document.getElementById('btn-pause');
-  if (btn) {
-    btn.textContent = isPaused ? '\u23F9 \uAC8C\uC784 \uC885\uB8CC' : '\u23F8 \uC77C\uC2DC\uC815\uC9C0';
-  }
-  const grid = document.getElementById('player-grid');
-  if (grid) {
-    grid.classList.toggle('paused', isPaused);
-  }
-}
-
 // --- Stats ---
 
 function showStats() {
   if (!lastStats) return showSettings();
   const names = getGameNames();
+  const canSave = appMode !== 'multi' || multiplayerRoom?.hostUid === multiplayerSession?.uid;
   renderStatsScreen(appEl, lastStats, names, {
+    canSave,
     gameName: lastSavedGame?.gameName,
     save(gameName) {
       if (lastSavedGame) {
@@ -460,6 +831,7 @@ function init() {
   });
 
   showScreen('settings');
+  resumeMultiplayerIfNeeded();
 
   // Force landscape orientation
   try {
@@ -479,6 +851,27 @@ function init() {
         location.reload();
       }
     });
+  }
+}
+
+async function resumeMultiplayerIfNeeded() {
+  const searchParams = new URLSearchParams(location.search);
+  const queryCode = normalizeRoomCode(searchParams.get('r') || searchParams.get('room') || '');
+  if (queryCode) {
+    appMode = 'multi';
+    showScreen('settings');
+    await runMultiplayerAction(async () => enterLobby(await joinMultiplayerRoom(queryCode)));
+    return;
+  }
+
+  try {
+    const session = await restoreRoom();
+    if (session) {
+      appMode = 'multi';
+      enterLobby(session);
+    }
+  } catch {
+    // A stale or offline room should not prevent single mode startup.
   }
 }
 
