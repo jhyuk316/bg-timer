@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getDefaultSettings, loadSettings } from '../../js/settings.js';
+import { buildDefaultMultiplayerConfig, getDefaultSettings, loadSettings } from '../../js/settings.js';
 
 test('new installs default to simple timer mode', () => {
   assert.equal(getDefaultSettings().timerMode, 'simple');
@@ -35,4 +35,20 @@ test('saved timer mode is restored', () => {
   } finally {
     globalThis.localStorage = originalLocalStorage;
   }
+});
+
+test('multiplayer rooms default to simple mode independently of single settings', () => {
+  const config = buildDefaultMultiplayerConfig({
+    timerMode: 'advanced',
+    turnTime: 20,
+    mainTime: 2_400,
+    penaltyTime: 300,
+  });
+
+  assert.deepEqual(config, {
+    timerMode: 'simple',
+    turnTimeMs: 20_000,
+    mainTimeMs: 2_400_000,
+    penaltyTimeMs: 300_000,
+  });
 });

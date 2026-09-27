@@ -1,4 +1,4 @@
-import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
+import { buildDefaultMultiplayerConfig, loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
@@ -218,12 +218,7 @@ function showMultiplayerEntry() {
     setMode,
     async createRoom() {
       await runMultiplayerAction(async () => {
-        const config = {
-          timerMode: settings.timerMode,
-          turnTimeMs: settings.turnTime * 1000,
-          mainTimeMs: settings.mainTime * 1000,
-          penaltyTimeMs: settings.penaltyTime * 1000,
-        };
+        const config = buildDefaultMultiplayerConfig(settings);
         const session = await createRoom(config, COLOR_PALETTE);
         enterLobby(session);
       });

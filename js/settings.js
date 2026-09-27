@@ -78,6 +78,15 @@ export function getDefaultSettings() {
   };
 }
 
+export function buildDefaultMultiplayerConfig(settings) {
+  return {
+    timerMode: TIMER_MODES.SIMPLE,
+    turnTimeMs: settings.turnTime * 1000,
+    mainTimeMs: settings.mainTime * 1000,
+    penaltyTimeMs: settings.penaltyTime * 1000,
+  };
+}
+
 export function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
