@@ -87,6 +87,10 @@ export function buildDefaultMultiplayerConfig(settings) {
   };
 }
 
+export function buildCountModeMultiplayerConfig(config) {
+  return { ...config, timerMode: TIMER_MODES.SIMPLE };
+}
+
 export function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);

@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildDefaultMultiplayerConfig, getDefaultSettings, loadSettings } from '../../js/settings.js';
+import {
+  buildCountModeMultiplayerConfig,
+  buildDefaultMultiplayerConfig,
+  getDefaultSettings,
+  loadSettings,
+} from '../../js/settings.js';
 
 test('new installs default to simple timer mode', () => {
   assert.equal(getDefaultSettings().timerMode, 'simple');
@@ -43,6 +48,22 @@ test('multiplayer rooms default to simple mode independently of single settings'
     turnTime: 20,
     mainTime: 2_400,
     penaltyTime: 300,
+  });
+
+  assert.deepEqual(config, {
+    timerMode: 'simple',
+    turnTimeMs: 20_000,
+    mainTimeMs: 2_400_000,
+    penaltyTimeMs: 300_000,
+  });
+});
+
+test('advanced multiplayer config can return to count mode without losing values', () => {
+  const config = buildCountModeMultiplayerConfig({
+    timerMode: 'advanced',
+    turnTimeMs: 20_000,
+    mainTimeMs: 2_400_000,
+    penaltyTimeMs: 300_000,
   });
 
   assert.deepEqual(config, {

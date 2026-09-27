@@ -155,6 +155,12 @@ export function renderLobbyScreen(container, room, context, callbacks) {
     config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
   }
   if (context.isHost) {
+    if (room.config.timerMode !== 'simple') {
+      const countModeButton = el('button', 'btn-secondary lobby-advanced-toggle', '카운트 모드로 변경');
+      countModeButton.type = 'button';
+      countModeButton.addEventListener('click', callbacks.useCountMode);
+      config.appendChild(countModeButton);
+    }
     const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '고급 설정');
     advancedButton.type = 'button';
     advancedButton.addEventListener('click', callbacks.toggleAdvancedSettings);

@@ -1,4 +1,4 @@
-import { buildDefaultMultiplayerConfig, loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
+import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
@@ -358,6 +358,13 @@ function showLobby() {
     },
     async saveAdvancedSettings(config) {
       await runLobbyAction(() => updateRoomConfig(multiplayerSession.roomId, config));
+      multiplayerAdvancedSettingsOpen = false;
+    },
+    async useCountMode() {
+      await runLobbyAction(() => updateRoomConfig(
+        multiplayerSession.roomId,
+        buildCountModeMultiplayerConfig(multiplayerRoom.config),
+      ));
       multiplayerAdvancedSettingsOpen = false;
     },
     async startGame() {
