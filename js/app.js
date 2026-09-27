@@ -16,6 +16,7 @@ import {
   setPlayerOwner,
   setReady as setMultiplayerReady,
   subscribeRoom,
+  updateRoomConfig,
   updatePlayerName,
 } from './multiplayer/room-service.js';
 import {
@@ -49,6 +50,7 @@ let multiplayerLeaving = false;
 let lastGameRenderKey = null;
 let lastLobbyRenderKey = null;
 let multiplayerConnected = true;
+let multiplayerAdvancedSettingsOpen = false;
 let unsubscribeConnection = null;
 
 function updateGameConnection() {
@@ -65,6 +67,7 @@ function returnToMultiplayerEntry(message = '') {
   unsubscribeRoom = null;
   multiplayerSession = null;
   multiplayerRoom = null;
+  multiplayerAdvancedSettingsOpen = false;
   multiplayerError = message;
   const url = new URL(location.href);
   url.searchParams.delete('r');
@@ -250,6 +253,7 @@ async function runMultiplayerAction(action) {
 function enterLobby(session) {
   multiplayerSession = session;
   multiplayerRoom = null;
+  multiplayerAdvancedSettingsOpen = false;
   multiplayerError = '';
   lastGameRenderKey = null;
   lastLobbyRenderKey = null;
@@ -337,6 +341,7 @@ function showLobby() {
     self: multiplayerRoom.participants?.[uid],
     isHost: multiplayerRoom.hostUid === uid,
     error: multiplayerError,
+    showAdvancedSettings: multiplayerAdvancedSettingsOpen,
   }, {
     async togglePlayer(playerId, ownerUid) {
       await runLobbyAction(() => setPlayerOwner(multiplayerSession.roomId, playerId, ownerUid));
@@ -346,6 +351,14 @@ function showLobby() {
     },
     async setReady(ready) {
       await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
+    },
+    toggleAdvancedSettings() {
+      multiplayerAdvancedSettingsOpen = !multiplayerAdvancedSettingsOpen;
+      showLobby();
+    },
+    async saveAdvancedSettings(config) {
+      await runLobbyAction(() => updateRoomConfig(multiplayerSession.roomId, config));
+      multiplayerAdvancedSettingsOpen = false;
     },
     async startGame() {
       await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));

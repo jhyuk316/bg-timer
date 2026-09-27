@@ -144,7 +144,7 @@ function renderSettingsPage1(container, settings, callbacks) {
   historyBtn.addEventListener('click', callbacks.openHistory);
   nav.appendChild(historyBtn);
 
-  const advancedBtn = el('button', 'btn-secondary', '고급 타이머 설정');
+  const advancedBtn = el('button', 'btn-secondary', '고급 설정');
   advancedBtn.addEventListener('click', () => {
     const result = callbacks.openAdvancedSettings();
     if (result === 'empty') {
