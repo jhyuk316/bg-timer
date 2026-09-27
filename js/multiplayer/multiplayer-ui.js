@@ -155,12 +155,6 @@ export function renderLobbyScreen(container, room, context, callbacks) {
     config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
   }
   if (context.isHost) {
-    if (room.config.timerMode !== 'simple') {
-      const countModeButton = el('button', 'btn-secondary lobby-advanced-toggle', '카운트 모드로 변경');
-      countModeButton.type = 'button';
-      countModeButton.addEventListener('click', callbacks.useCountMode);
-      config.appendChild(countModeButton);
-    }
     const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '고급 설정');
     advancedButton.type = 'button';
     advancedButton.addEventListener('click', callbacks.toggleAdvancedSettings);
@@ -170,6 +164,16 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   if (context.isHost && context.showAdvancedSettings) {
     const panel = el('div', 'lobby-advanced-panel');
+    const modeField = el('label', 'lobby-advanced-field lobby-mode-field');
+    modeField.appendChild(el('span', '', '카운터 방식'));
+    const modeSelect = document.createElement('select');
+    modeSelect.append(
+      Object.assign(document.createElement('option'), { value: 'simple', textContent: '카운트 모드' }),
+      Object.assign(document.createElement('option'), { value: 'advanced', textContent: '고급 타이머' }),
+    );
+    modeSelect.value = room.config.timerMode === 'simple' ? 'simple' : 'advanced';
+    modeField.appendChild(modeSelect);
+    panel.appendChild(modeField);
     const fields = [
       ['메인 시간', 'mainTimeMs', Math.round(room.config.mainTimeMs / 60000), 1, 240, 60000, '분'],
       ['턴 딜레이', 'turnTimeMs', Math.round(room.config.turnTimeMs / 1000), 0, 300, 1000, '초'],
@@ -189,11 +193,17 @@ export function renderLobbyScreen(container, room, context, callbacks) {
       field.append(input, el('span', '', unit));
       panel.appendChild(field);
     }
+    const updateFieldAvailability = () => {
+      const disabled = modeSelect.value === 'simple';
+      for (const { input } of Object.values(inputs)) input.disabled = disabled;
+    };
+    modeSelect.addEventListener('change', updateFieldAvailability);
+    updateFieldAvailability();
     const cancelButton = el('button', 'btn-secondary', '취소');
     cancelButton.addEventListener('click', callbacks.toggleAdvancedSettings);
     const applyButton = el('button', 'btn-primary', '적용');
-    applyButton.addEventListener('click', () => callbacks.saveAdvancedSettings({
-      timerMode: 'advanced',
+    applyButton.addEventListener('click', () => callbacks.saveTimerSettings({
+      timerMode: modeSelect.value,
       turnTimeMs: Number(inputs.turnTimeMs.input.value) * inputs.turnTimeMs.multiplier,
       mainTimeMs: Number(inputs.mainTimeMs.input.value) * inputs.mainTimeMs.multiplier,
       penaltyTimeMs: Number(inputs.penaltyTimeMs.input.value) * inputs.penaltyTimeMs.multiplier,

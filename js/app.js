@@ -356,15 +356,11 @@ function showLobby() {
       multiplayerAdvancedSettingsOpen = !multiplayerAdvancedSettingsOpen;
       showLobby();
     },
-    async saveAdvancedSettings(config) {
-      await runLobbyAction(() => updateRoomConfig(multiplayerSession.roomId, config));
-      multiplayerAdvancedSettingsOpen = false;
-    },
-    async useCountMode() {
-      await runLobbyAction(() => updateRoomConfig(
-        multiplayerSession.roomId,
-        buildCountModeMultiplayerConfig(multiplayerRoom.config),
-      ));
+    async saveTimerSettings(config) {
+      const nextConfig = config.timerMode === 'simple'
+        ? buildCountModeMultiplayerConfig(config)
+        : config;
+      await runLobbyAction(() => updateRoomConfig(multiplayerSession.roomId, nextConfig));
       multiplayerAdvancedSettingsOpen = false;
     },
     async startGame() {
