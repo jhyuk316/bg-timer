@@ -153,7 +153,7 @@ function renderSettingsPage1(container, settings, callbacks) {
   });
   nav.appendChild(advancedBtn);
 
-  const startBtn = el('button', 'btn-primary', '심플 모드로 시작');
+  const startBtn = el('button', 'btn-primary', '게임 시작');
   startBtn.addEventListener('click', () => {
     const result = callbacks.startSimpleGame();
     if (result === 'empty') {
