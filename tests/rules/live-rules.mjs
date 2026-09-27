@@ -111,6 +111,7 @@ try {
   await check('second guest claims player', true, `${roomPath}/players/p2`, 'PATCH', otherGuest, { ownerUid: otherGuest.uid });
   await check('guest cannot take another guest player', false, `${roomPath}/players/p2`, 'PATCH', guest, { ownerUid: guest.uid });
   await check('guest cannot start room', false, `${roomPath}/status`, 'PUT', guest, 'playing');
+  await check('lobby cannot change player order', false, `${roomPath}/playerOrder`, 'PUT', guest, 'p1,p0,p2');
 
   const startedAt = Date.now();
   const game1 = {
@@ -122,6 +123,9 @@ try {
     events: { r1: { revision: 1, type: 'start', actorUid: host.uid, at: startedAt } },
   };
   await check('host starts game', true, roomPath, 'PATCH', host, { status: 'playing', game: game1 });
+  await check('guest changes player order', true, `${roomPath}/playerOrder`, 'PUT', guest, 'p1,p0,p2');
+  await check('outsider cannot change player order', false, `${roomPath}/playerOrder`, 'PUT', outsider, 'p0,p1,p2');
+  await check('invalid player order is rejected', false, `${roomPath}/playerOrder`, 'PUT', guest, 'invalid');
   const game2 = appendEvent(game1, { type: 'turn', actorUid: guest.uid, playerId: 'p0', activeType: 'player' });
   await check('guest switches host-owned player and preserves start event', true, gamePath, 'PUT', guest, game2);
   const game3 = appendEvent(game2, { type: 'referee', actorUid: guest.uid, activeType: 'referee' });
@@ -156,6 +160,7 @@ try {
   });
   await check('host ends game', true, gamePath, 'PUT', host, hostEnd);
   await check('host closes room', true, `${roomPath}/status`, 'PUT', host, 'ended');
+  await check('ended room cannot change player order', false, `${roomPath}/playerOrder`, 'PUT', guest, 'p0,p1,p2');
 } finally {
   if (host && codeCreated) {
     await databaseRequest(`roomCodes/${code}`, 'DELETE', host).catch(() => {});

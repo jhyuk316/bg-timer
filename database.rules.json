@@ -39,6 +39,10 @@
           ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid",
           ".validate": "newData.hasChildren(['turnTimeMs', 'mainTimeMs', 'penaltyTimeMs']) && newData.child('turnTimeMs').isNumber() && newData.child('turnTimeMs').val() >= 0 && newData.child('turnTimeMs').val() <= 300000 && newData.child('mainTimeMs').isNumber() && newData.child('mainTimeMs').val() >= 60000 && newData.child('mainTimeMs').val() <= 14400000 && newData.child('penaltyTimeMs').isNumber() && newData.child('penaltyTimeMs').val() >= 60000 && newData.child('penaltyTimeMs').val() <= 3600000"
         },
+        "playerOrder": {
+          ".write": "auth != null && root.child('rooms').child($roomId).child('status').val() === 'playing' && root.child('rooms').child($roomId).child('participants').child(auth.uid).exists()",
+          ".validate": "newData.isString() && newData.val().matches(/^p[0-9](,p[0-9]){0,5}$/)"
+        },
         "participants": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",

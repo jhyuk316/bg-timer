@@ -294,7 +294,7 @@ export function renderGameScreen(container, gameState, settings, options = {}) {
   container.appendChild(startTime);
 
   // Player grid
-  const grid = el('div', `player-grid players-${settings.playerCount}`);
+  const grid = el('div', `player-grid players-${settings.playerCount}${options.roomCode ? ' multiplayer-seats' : ''}`);
   grid.id = 'player-grid';
 
   for (let i = 0; i < settings.playerCount; i++) {

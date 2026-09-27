@@ -1,3 +1,5 @@
+import { orderedSelectedPlayers } from './player-order.js';
+
 function eventKey(revision) {
   return `r${revision}`;
 }
@@ -91,12 +93,6 @@ function orderedEvents(game) {
   return [...byRevision.values()].sort((a, b) => a.revision - b.revision);
 }
 
-function selectedPlayers(room) {
-  return Object.entries(room.players || {})
-    .filter(([, player]) => Boolean(player.ownerUid))
-    .sort(([, a], [, b]) => a.paletteIndex - b.paletteIndex);
-}
-
 function consumePlayerTime(state, duration, config) {
   state.totalTimeUsed += duration;
   const mainUsed = Math.max(0, duration - config.turnTimeMs);
@@ -114,7 +110,7 @@ export function deriveGameView(room, serverNow) {
   const events = orderedEvents(game);
   const effectiveNow = game.status === 'ended' ? game.endedAt : Math.max(serverNow, game.changedAt);
   const config = room.config;
-  const entries = selectedPlayers(room);
+  const entries = orderedSelectedPlayers(room);
   const playerById = new Map();
   const players = entries.map(([id, player]) => {
     const state = {

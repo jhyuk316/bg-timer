@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bg-timer-v12';
+const CACHE_NAME = 'bg-timer-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,8 @@ const ASSETS = [
   './js/multiplayer/firebase-config.js',
   './js/multiplayer/game-service.js',
   './js/multiplayer/game-state.js',
+  './js/multiplayer/player-order.js',
+  './js/multiplayer/seat-drag.js',
   './js/multiplayer/multiplayer-ui.js',
   './js/multiplayer/qr-code.js',
   './js/multiplayer/room-code.js',
