@@ -150,12 +150,12 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   if (room.config.timerMode === 'simple') {
     config.appendChild(el('span', '', '카운트 모드 · 플레이 시간 누적'));
   } else {
-    config.appendChild(el('span', '', `메인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
-    config.appendChild(el('span', '', `딜레이 ${Math.round(room.config.turnTimeMs / 1000)}초`));
-    config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
+    config.appendChild(el('span', '', `카운트 모드 · 남은 시간 차감 · 개인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
+    config.appendChild(el('span', '', `턴별 기본 ${Math.round(room.config.turnTimeMs / 1000)}초`));
+    config.appendChild(el('span', '', `소진 후 추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
   }
   if (context.isHost) {
-    const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '고급 설정');
+    const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '타이머 방식 변경');
     advancedButton.type = 'button';
     advancedButton.addEventListener('click', callbacks.toggleAdvancedSettings);
     config.appendChild(advancedButton);
@@ -165,19 +165,19 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   if (context.isHost && context.showAdvancedSettings) {
     const panel = el('div', 'lobby-advanced-panel');
     const modeField = el('label', 'lobby-advanced-field lobby-mode-field');
-    modeField.appendChild(el('span', '', '카운터 방식'));
+    modeField.appendChild(el('span', '', '카운트 모드'));
     const modeSelect = document.createElement('select');
     modeSelect.append(
-      Object.assign(document.createElement('option'), { value: 'simple', textContent: '카운트 모드' }),
-      Object.assign(document.createElement('option'), { value: 'advanced', textContent: '고급 타이머' }),
+      Object.assign(document.createElement('option'), { value: 'simple', textContent: '플레이 시간 누적' }),
+      Object.assign(document.createElement('option'), { value: 'advanced', textContent: '남은 시간 차감' }),
     );
     modeSelect.value = room.config.timerMode === 'simple' ? 'simple' : 'advanced';
     modeField.appendChild(modeSelect);
     panel.appendChild(modeField);
     const fields = [
-      ['메인 시간', 'mainTimeMs', Math.round(room.config.mainTimeMs / 60000), 1, 240, 60000, '분'],
-      ['턴 딜레이', 'turnTimeMs', Math.round(room.config.turnTimeMs / 1000), 0, 300, 1000, '초'],
-      ['추가 시간', 'penaltyTimeMs', Math.round(room.config.penaltyTimeMs / 60000), 1, 60, 60000, '분'],
+      ['개인 시간', 'mainTimeMs', Math.round(room.config.mainTimeMs / 60000), 1, 240, 60000, '분'],
+      ['턴별 기본 시간', 'turnTimeMs', Math.round(room.config.turnTimeMs / 1000), 0, 300, 1000, '초'],
+      ['시간 소진 후 추가 시간', 'penaltyTimeMs', Math.round(room.config.penaltyTimeMs / 60000), 1, 60, 60000, '분'],
     ];
     const inputs = {};
     for (const [label, key, value, min, max, multiplier, unit] of fields) {
@@ -194,8 +194,11 @@ export function renderLobbyScreen(container, room, context, callbacks) {
       panel.appendChild(field);
     }
     const updateFieldAvailability = () => {
-      const disabled = modeSelect.value === 'simple';
-      for (const { input } of Object.values(inputs)) input.disabled = disabled;
+      const showCountdownFields = modeSelect.value === 'advanced';
+      for (const { input } of Object.values(inputs)) {
+        input.parentElement.hidden = !showCountdownFields;
+        input.disabled = !showCountdownFields;
+      }
     };
     modeSelect.addEventListener('change', updateFieldAvailability);
     updateFieldAvailability();

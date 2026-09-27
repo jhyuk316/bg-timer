@@ -763,6 +763,7 @@ button:disabled { opacity: 0.4; cursor: default; }
   background: var(--bg2);
 }
 .lobby-advanced-field { display: grid; grid-template-columns: auto 3.5rem auto; align-items: center; gap: 0.3rem; font-size: 0.68rem; }
+.lobby-advanced-field[hidden] { display: none; }
 .lobby-advanced-field input { width: 3.5rem; padding: 0.35rem; border: 1px solid var(--surface2); border-radius: 5px; background: var(--bg); color: var(--text); }
 .lobby-advanced-field select { padding: 0.35rem; border: 1px solid var(--surface2); border-radius: 5px; background: var(--bg); color: var(--text); }
 .lobby-mode-field { grid-template-columns: auto minmax(7rem, auto); }
