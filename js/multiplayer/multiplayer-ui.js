@@ -147,10 +147,75 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   const footer = el('div', 'lobby-footer');
   const config = el('div', 'lobby-config');
-  config.appendChild(el('span', '', `메인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
-  config.appendChild(el('span', '', `딜레이 ${Math.round(room.config.turnTimeMs / 1000)}초`));
-  config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
+  if (room.config.timerMode === 'simple') {
+    config.appendChild(el('span', '', '타이머 방식 · 플레이 시간 누적'));
+  } else {
+    config.appendChild(el('span', '', `타이머 방식 · 남은 시간 차감 · 개인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
+    config.appendChild(el('span', '', `턴별 기본 ${Math.round(room.config.turnTimeMs / 1000)}초`));
+    config.appendChild(el('span', '', `소진 후 추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
+  }
+  if (context.isHost) {
+    const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '변경');
+    advancedButton.type = 'button';
+    advancedButton.addEventListener('click', callbacks.toggleAdvancedSettings);
+    config.appendChild(advancedButton);
+  }
   footer.appendChild(config);
+
+  if (context.isHost && context.showAdvancedSettings) {
+    const panel = el('div', 'lobby-advanced-panel');
+    const modeField = el('label', 'lobby-advanced-field lobby-mode-field');
+    modeField.appendChild(el('span', '', '타이머 방식'));
+    const modeSelect = document.createElement('select');
+    modeSelect.append(
+      Object.assign(document.createElement('option'), { value: 'simple', textContent: '플레이 시간 누적' }),
+      Object.assign(document.createElement('option'), { value: 'advanced', textContent: '남은 시간 차감' }),
+    );
+    modeSelect.value = room.config.timerMode === 'simple' ? 'simple' : 'advanced';
+    modeField.appendChild(modeSelect);
+    panel.appendChild(modeField);
+    const fields = [
+      ['개인 시간', 'mainTimeMs', Math.round(room.config.mainTimeMs / 60000), 1, 240, 60000, '분'],
+      ['턴별 기본 시간', 'turnTimeMs', Math.round(room.config.turnTimeMs / 1000), 0, 300, 1000, '초'],
+      ['시간 소진 후 추가 시간', 'penaltyTimeMs', Math.round(room.config.penaltyTimeMs / 60000), 1, 60, 60000, '분'],
+    ];
+    const inputs = {};
+    for (const [label, key, value, min, max, multiplier, unit] of fields) {
+      const field = el('label', 'lobby-advanced-field');
+      field.appendChild(el('span', '', label));
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = String(min);
+      input.max = String(max);
+      input.value = String(value);
+      input.inputMode = 'numeric';
+      inputs[key] = { input, multiplier };
+      field.append(input, el('span', '', unit));
+      panel.appendChild(field);
+    }
+    const updateFieldAvailability = () => {
+      const showCountdownFields = modeSelect.value === 'advanced';
+      for (const { input } of Object.values(inputs)) {
+        input.parentElement.hidden = !showCountdownFields;
+        input.disabled = !showCountdownFields;
+      }
+    };
+    modeSelect.addEventListener('change', updateFieldAvailability);
+    updateFieldAvailability();
+    const cancelButton = el('button', 'btn-secondary', '취소');
+    cancelButton.addEventListener('click', callbacks.toggleAdvancedSettings);
+    const applyButton = el('button', 'btn-primary', '적용');
+    applyButton.addEventListener('click', () => callbacks.saveTimerSettings({
+      timerMode: modeSelect.value,
+      turnTimeMs: Number(inputs.turnTimeMs.input.value) * inputs.turnTimeMs.multiplier,
+      mainTimeMs: Number(inputs.mainTimeMs.input.value) * inputs.mainTimeMs.multiplier,
+      penaltyTimeMs: Number(inputs.penaltyTimeMs.input.value) * inputs.penaltyTimeMs.multiplier,
+    }));
+    const actions = el('div', 'lobby-advanced-actions');
+    actions.append(cancelButton, applyButton);
+    panel.appendChild(actions);
+    right.appendChild(panel);
+  }
 
   const readyButton = el('button', 'btn-secondary', context.self?.ready ? '준비 취소' : '준비 완료');
   readyButton.addEventListener('click', () => callbacks.setReady(!context.self?.ready));

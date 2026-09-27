@@ -1,7 +1,7 @@
 const State = { IDLE: 'idle', PLAYER: 'player', REFEREE: 'referee' };
 
 export function createGame(settings, dependencies = {}) {
-  const { playerCount, players, turnTime, mainTime, penaltyTime } = settings;
+  const { playerCount, players, turnTime, mainTime, penaltyTime, timerMode = 'simple' } = settings;
   const now = dependencies.now || Date.now;
   const setIntervalFn = dependencies.setIntervalFn || setInterval;
   const clearIntervalFn = dependencies.clearIntervalFn || clearInterval;
@@ -29,7 +29,7 @@ export function createGame(settings, dependencies = {}) {
     gameEndTime: null,
     lastTickTime: null,
     intervalId: null,
-    config: { turnTime: turnTime * 1000, mainTime: mainTime * 1000, penaltyTime: penaltyTime * 1000 },
+    config: { timerMode, turnTime: turnTime * 1000, mainTime: mainTime * 1000, penaltyTime: penaltyTime * 1000 },
     turnLog: [],
     _tickCallbacks: [],
     _eventCallbacks: [],
@@ -63,6 +63,11 @@ export function createGame(settings, dependencies = {}) {
     if (game.state === State.PLAYER) {
       const p = game.playerStates[game.activePlayer];
       p.totalTimeUsed += elapsed;
+
+      if (game.config.timerMode === 'simple') {
+        for (const cb of game._tickCallbacks) cb(game);
+        return;
+      }
 
       if (p.phase === 'turn') {
         p.turnTimeRemaining -= elapsed;
@@ -233,6 +238,7 @@ export function createGame(settings, dependencies = {}) {
   };
 
   game.getState = () => ({
+    timerMode: game.config.timerMode,
     state: game.state,
     activePlayer: game.activePlayer,
     playerStates: game.playerStates,

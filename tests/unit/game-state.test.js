@@ -93,3 +93,18 @@ test('end closes the active segment and freezes statistics', () => {
   assert.equal(stats.players[0].totalTime, 3_000);
   assert.equal(game.status, 'ended');
 });
+
+test('simple multiplayer mode counts usage up without advanced timer calculations', () => {
+  let game = createInitialGame(0, 'host');
+  game = createTurnEvent(game, 'p0', 'guest', 1_000);
+  game = createOperationalEvent(game, 'host', 76_000);
+  const room = roomWithGame(game);
+  room.config.timerMode = 'simple';
+
+  const view = deriveGameView(room, 80_000);
+
+  assert.equal(view.timerMode, 'simple');
+  assert.equal(view.players[0].totalTimeUsed, 75_000);
+  assert.equal(view.players[0].mainTimeRemaining, 60_000);
+  assert.equal(view.players[0].penaltyCount, 0);
+});

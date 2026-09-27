@@ -1,4 +1,4 @@
-import { loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
+import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
 import { createGame } from './timer.js';
 import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
@@ -16,6 +16,7 @@ import {
   setPlayerOwner,
   setReady as setMultiplayerReady,
   subscribeRoom,
+  updateRoomConfig,
   updatePlayerName,
 } from './multiplayer/room-service.js';
 import {
@@ -49,6 +50,7 @@ let multiplayerLeaving = false;
 let lastGameRenderKey = null;
 let lastLobbyRenderKey = null;
 let multiplayerConnected = true;
+let multiplayerAdvancedSettingsOpen = false;
 let unsubscribeConnection = null;
 
 function updateGameConnection() {
@@ -65,6 +67,7 @@ function returnToMultiplayerEntry(message = '') {
   unsubscribeRoom = null;
   multiplayerSession = null;
   multiplayerRoom = null;
+  multiplayerAdvancedSettingsOpen = false;
   multiplayerError = message;
   const url = new URL(location.href);
   url.searchParams.delete('r');
@@ -137,11 +140,20 @@ function showSettings() {
       saveSettings(settings);
       showSettings();
     },
-    goToPage2() {
+    openAdvancedSettings() {
       const activeCount = settings.activeMeeples.filter(Boolean).length;
       if (activeCount === 0) return 'empty';
+      settings.timerMode = 'advanced';
+      saveSettings(settings);
       settingsPage = 2;
       showSettings();
+    },
+    startSimpleGame() {
+      const activeCount = settings.activeMeeples.filter(Boolean).length;
+      if (activeCount === 0) return 'empty';
+      settings.timerMode = 'simple';
+      saveSettings(settings);
+      startNewGame();
     },
     goToPage1() {
       settingsPage = 1;
@@ -180,6 +192,8 @@ function showSettings() {
       showScreen('history');
     },
     startGame() {
+      settings.timerMode = 'advanced';
+      saveSettings(settings);
       startNewGame();
     },
   });
@@ -207,11 +221,7 @@ function showMultiplayerEntry() {
     setMode,
     async createRoom() {
       await runMultiplayerAction(async () => {
-        const config = {
-          turnTimeMs: settings.turnTime * 1000,
-          mainTimeMs: settings.mainTime * 1000,
-          penaltyTimeMs: settings.penaltyTime * 1000,
-        };
+        const config = buildDefaultMultiplayerConfig(settings);
         const session = await createRoom(config, COLOR_PALETTE);
         enterLobby(session);
       });
@@ -243,6 +253,7 @@ async function runMultiplayerAction(action) {
 function enterLobby(session) {
   multiplayerSession = session;
   multiplayerRoom = null;
+  multiplayerAdvancedSettingsOpen = false;
   multiplayerError = '';
   lastGameRenderKey = null;
   lastLobbyRenderKey = null;
@@ -330,6 +341,7 @@ function showLobby() {
     self: multiplayerRoom.participants?.[uid],
     isHost: multiplayerRoom.hostUid === uid,
     error: multiplayerError,
+    showAdvancedSettings: multiplayerAdvancedSettingsOpen,
   }, {
     async togglePlayer(playerId, ownerUid) {
       await runLobbyAction(() => setPlayerOwner(multiplayerSession.roomId, playerId, ownerUid));
@@ -339,6 +351,17 @@ function showLobby() {
     },
     async setReady(ready) {
       await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
+    },
+    toggleAdvancedSettings() {
+      multiplayerAdvancedSettingsOpen = !multiplayerAdvancedSettingsOpen;
+      showLobby();
+    },
+    async saveTimerSettings(config) {
+      const nextConfig = config.timerMode === 'simple'
+        ? buildCountModeMultiplayerConfig(config)
+        : config;
+      await runLobbyAction(() => updateRoomConfig(multiplayerSession.roomId, nextConfig));
+      multiplayerAdvancedSettingsOpen = false;
     },
     async startGame() {
       await runLobbyAction(() => startMultiplayerGame(multiplayerSession.roomId));
@@ -368,6 +391,7 @@ function multiplayerOwnerLabel(ownerUid) {
 function toMultiplayerUiState(view) {
   const activePlayer = view.players.findIndex((player) => player.id === view.activePlayerId);
   return {
+    timerMode: view.timerMode,
     state: view.activeType === 'player' ? 'player' : 'referee',
     activePlayer,
     playerStates: view.players,
@@ -397,6 +421,7 @@ function showMultiplayerGame() {
     connected: multiplayerRoom.participants?.[player.ownerUid]?.connected !== false,
   }));
   renderGameScreen(appEl, toMultiplayerUiState(view), {
+    timerMode: view.timerMode,
     playerCount: players.length,
     players,
   }, {
@@ -500,6 +525,7 @@ function finishMultiplayerGame() {
   lastHistoryBase = {
     players: lastStats.players,
     timerConfig: {
+      timerMode: multiplayerRoom.config.timerMode || 'advanced',
       presetName: 'Multiplayer',
       turnTime: multiplayerRoom.config.turnTimeMs / 1000,
       mainTime: multiplayerRoom.config.mainTimeMs / 1000,
@@ -542,6 +568,7 @@ function startNewGame() {
   }
 
   const gameSettings = {
+    timerMode: settings.timerMode,
     playerCount: activePlayers.length,
     players: activePlayers,
     turnTime: settings.turnTime,
@@ -746,6 +773,7 @@ function buildHistoryData(stats, gameName) {
     gameName,
     players: stats.players,
     timerConfig: {
+      timerMode: settings.timerMode,
       presetName: settings.presetName,
       turnTime: settings.turnTime,
       mainTime: settings.mainTime,

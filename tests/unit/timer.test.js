@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createGame } from '../../js/timer.js';
 
-function createHarness(playerCount = 2) {
+function createHarness(playerCount = 2, timerMode = 'advanced') {
   let nowMs = 1_000;
   let scheduledTick = null;
 
@@ -13,6 +13,7 @@ function createHarness(playerCount = 2) {
   }));
 
   const game = createGame({
+    timerMode,
     playerCount,
     players,
     turnTime: 10,
@@ -97,4 +98,18 @@ test('does not expose pause or resume operations', () => {
 test('initializes six players', () => {
   const { game } = createHarness(6);
   assert.equal(game.getState().playerStates.length, 6);
+});
+
+test('simple mode counts player time up without countdown or penalties', () => {
+  const { game, advance } = createHarness(2, 'simple');
+
+  game.start();
+  game.tapPlayer(0);
+  advance(75_000);
+
+  const player = game.getState().playerStates[0];
+  assert.equal(player.totalTimeUsed, 75_000);
+  assert.equal(player.turnTimeRemaining, 10_000);
+  assert.equal(player.mainTimeRemaining, 60_000);
+  assert.equal(player.penaltyCount, 0);
 });

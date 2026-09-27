@@ -56,8 +56,14 @@ export const TIMER_PRESETS = {
 
 const SETTINGS_KEY = 'bg-timer-settings';
 
+export const TIMER_MODES = {
+  SIMPLE: 'simple',
+  ADVANCED: 'advanced',
+};
+
 export function getDefaultSettings() {
   return {
+    timerMode: TIMER_MODES.SIMPLE,
     activeMeeples: [true, false, false, false, false, false, true, false, false, false],
     playerCount: 2,
     players: Array.from({ length: 10 }, (_, i) => ({
@@ -70,6 +76,19 @@ export function getDefaultSettings() {
     penaltyTime: 5 * 60,
     soundEnabled: true,
   };
+}
+
+export function buildDefaultMultiplayerConfig(settings) {
+  return {
+    timerMode: TIMER_MODES.SIMPLE,
+    turnTimeMs: settings.turnTime * 1000,
+    mainTimeMs: settings.mainTime * 1000,
+    penaltyTimeMs: settings.penaltyTime * 1000,
+  };
+}
+
+export function buildCountModeMultiplayerConfig(config) {
+  return { ...config, timerMode: TIMER_MODES.SIMPLE };
 }
 
 export function loadSettings() {
