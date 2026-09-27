@@ -137,11 +137,20 @@ function showSettings() {
       saveSettings(settings);
       showSettings();
     },
-    goToPage2() {
+    openAdvancedSettings() {
       const activeCount = settings.activeMeeples.filter(Boolean).length;
       if (activeCount === 0) return 'empty';
+      settings.timerMode = 'advanced';
+      saveSettings(settings);
       settingsPage = 2;
       showSettings();
+    },
+    startSimpleGame() {
+      const activeCount = settings.activeMeeples.filter(Boolean).length;
+      if (activeCount === 0) return 'empty';
+      settings.timerMode = 'simple';
+      saveSettings(settings);
+      startNewGame();
     },
     goToPage1() {
       settingsPage = 1;
@@ -180,6 +189,8 @@ function showSettings() {
       showScreen('history');
     },
     startGame() {
+      settings.timerMode = 'advanced';
+      saveSettings(settings);
       startNewGame();
     },
   });

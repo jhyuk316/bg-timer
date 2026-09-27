@@ -7,7 +7,7 @@ test('new installs default to simple timer mode', () => {
   assert.equal(getDefaultSettings().timerMode, 'simple');
 });
 
-test('existing saved settings keep advanced timer behavior', () => {
+test('existing saved settings migrate to simple timer mode', () => {
   const originalLocalStorage = globalThis.localStorage;
   globalThis.localStorage = {
     getItem() {
@@ -16,7 +16,7 @@ test('existing saved settings keep advanced timer behavior', () => {
   };
 
   try {
-    assert.equal(loadSettings().timerMode, 'advanced');
+    assert.equal(loadSettings().timerMode, 'simple');
   } finally {
     globalThis.localStorage = originalLocalStorage;
   }

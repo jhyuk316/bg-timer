@@ -86,9 +86,6 @@ export function loadSettings() {
     const defaults = getDefaultSettings();
     const merged = { ...defaults, ...saved };
 
-    // Existing installs predate timer modes and must retain their countdown behavior.
-    if (!saved.timerMode) merged.timerMode = TIMER_MODES.ADVANCED;
-
     // Migration: ensure players array has 10 entries
     if (merged.players.length < 10) {
       while (merged.players.length < 10) {

@@ -144,14 +144,23 @@ function renderSettingsPage1(container, settings, callbacks) {
   historyBtn.addEventListener('click', callbacks.openHistory);
   nav.appendChild(historyBtn);
 
-  const nextBtn = el('button', 'btn-primary', '다음 →');
-  nextBtn.addEventListener('click', () => {
-    const result = callbacks.goToPage2();
+  const advancedBtn = el('button', 'btn-secondary', '고급 타이머 설정');
+  advancedBtn.addEventListener('click', () => {
+    const result = callbacks.openAdvancedSettings();
     if (result === 'empty') {
       showMeepleError(container, '플레이어를 1명 이상 선택해주세요');
     }
   });
-  nav.appendChild(nextBtn);
+  nav.appendChild(advancedBtn);
+
+  const startBtn = el('button', 'btn-primary', '심플 모드로 시작');
+  startBtn.addEventListener('click', () => {
+    const result = callbacks.startSimpleGame();
+    if (result === 'empty') {
+      showMeepleError(container, '플레이어를 1명 이상 선택해주세요');
+    }
+  });
+  nav.appendChild(startBtn);
 
   wrap.appendChild(nav);
   container.appendChild(wrap);
