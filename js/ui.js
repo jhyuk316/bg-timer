@@ -313,7 +313,11 @@ export function renderGameScreen(container, gameState, settings, options = {}) {
       area.appendChild(el('div', `game-player-owner${p.connected === false ? ' disconnected' : ''}`, p.ownerLabel));
     }
 
-    const timerEl = el('div', 'game-timer', formatTime(gameState.playerStates[i].mainTimeRemaining));
+    const timerEl = el('div', 'game-timer', formatTime(
+      gameState.timerMode === 'simple'
+        ? gameState.playerStates[i].totalTimeUsed
+        : gameState.playerStates[i].mainTimeRemaining,
+    ));
     timerEl.id = `player-timer-${i}`;
     area.appendChild(timerEl);
 
@@ -340,7 +344,7 @@ export function renderGameScreen(container, gameState, settings, options = {}) {
 }
 
 export function updateGameUI(gameState) {
-  const { state, activePlayer, playerStates, referee, gameStartTime, totalActiveTime } = gameState;
+  const { state, activePlayer, playerStates, referee, gameStartTime, totalActiveTime, timerMode } = gameState;
 
   // Top bar
   const refBar = document.getElementById('referee-bar');
@@ -371,23 +375,25 @@ export function updateGameUI(gameState) {
 
     const isActive = state === 'player' && activePlayer === i;
     area.classList.toggle('active', isActive);
-    area.classList.toggle('in-main', isActive && p.phase === 'main');
+    area.classList.toggle('in-main', timerMode !== 'simple' && isActive && p.phase === 'main');
 
     const timerEl = document.getElementById(`player-timer-${i}`);
     if (timerEl) {
-      timerEl.textContent = formatTime(p.mainTimeRemaining);
+      timerEl.textContent = formatTime(timerMode === 'simple' ? p.totalTimeUsed : p.mainTimeRemaining);
     }
 
     const delayEl = document.getElementById(`player-delay-${i}`);
     if (delayEl) {
-      delayEl.textContent = (isActive && p.phase === 'turn')
+      delayEl.textContent = (timerMode !== 'simple' && isActive && p.phase === 'turn')
         ? `딜레이 ${formatTime(p.turnTimeRemaining)}`
         : '';
     }
 
     const penaltyEl = document.getElementById(`player-penalty-${i}`);
     if (penaltyEl) {
-      penaltyEl.textContent = p.penaltyCount > 0 ? `패널티 ×${p.penaltyCount} (−${p.penaltyCount * 2}%)` : '';
+      penaltyEl.textContent = timerMode !== 'simple' && p.penaltyCount > 0
+        ? `패널티 ×${p.penaltyCount} (−${p.penaltyCount * 2}%)`
+        : '';
     }
   }
 

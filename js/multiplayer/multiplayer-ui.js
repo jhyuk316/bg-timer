@@ -147,9 +147,13 @@ export function renderLobbyScreen(container, room, context, callbacks) {
 
   const footer = el('div', 'lobby-footer');
   const config = el('div', 'lobby-config');
-  config.appendChild(el('span', '', `메인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
-  config.appendChild(el('span', '', `딜레이 ${Math.round(room.config.turnTimeMs / 1000)}초`));
-  config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
+  if (room.config.timerMode === 'simple') {
+    config.appendChild(el('span', '', '심플 모드 · 사용 시간 누적'));
+  } else {
+    config.appendChild(el('span', '', `메인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
+    config.appendChild(el('span', '', `딜레이 ${Math.round(room.config.turnTimeMs / 1000)}초`));
+    config.appendChild(el('span', '', `추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
+  }
   footer.appendChild(config);
 
   const readyButton = el('button', 'btn-secondary', context.self?.ready ? '준비 취소' : '준비 완료');

@@ -95,6 +95,7 @@ function orderedEvents(game) {
 
 function consumePlayerTime(state, duration, config) {
   state.totalTimeUsed += duration;
+  if (config.timerMode === 'simple') return;
   const mainUsed = Math.max(0, duration - config.turnTimeMs);
   if (mainUsed === 0) return;
 
@@ -157,6 +158,7 @@ export function deriveGameView(room, serverNow) {
   }
 
   return {
+    timerMode: config.timerMode || 'advanced',
     status: game.status,
     activeType: game.activeType,
     activePlayerId: game.activePlayerId,

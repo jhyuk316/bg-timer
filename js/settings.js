@@ -56,8 +56,14 @@ export const TIMER_PRESETS = {
 
 const SETTINGS_KEY = 'bg-timer-settings';
 
+export const TIMER_MODES = {
+  SIMPLE: 'simple',
+  ADVANCED: 'advanced',
+};
+
 export function getDefaultSettings() {
   return {
+    timerMode: TIMER_MODES.SIMPLE,
     activeMeeples: [true, false, false, false, false, false, true, false, false, false],
     playerCount: 2,
     players: Array.from({ length: 10 }, (_, i) => ({
@@ -79,6 +85,9 @@ export function loadSettings() {
     const saved = JSON.parse(raw);
     const defaults = getDefaultSettings();
     const merged = { ...defaults, ...saved };
+
+    // Existing installs predate timer modes and must retain their countdown behavior.
+    if (!saved.timerMode) merged.timerMode = TIMER_MODES.ADVANCED;
 
     // Migration: ensure players array has 10 entries
     if (merged.players.length < 10) {

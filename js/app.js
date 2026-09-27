@@ -208,6 +208,7 @@ function showMultiplayerEntry() {
     async createRoom() {
       await runMultiplayerAction(async () => {
         const config = {
+          timerMode: settings.timerMode,
           turnTimeMs: settings.turnTime * 1000,
           mainTimeMs: settings.mainTime * 1000,
           penaltyTimeMs: settings.penaltyTime * 1000,
@@ -368,6 +369,7 @@ function multiplayerOwnerLabel(ownerUid) {
 function toMultiplayerUiState(view) {
   const activePlayer = view.players.findIndex((player) => player.id === view.activePlayerId);
   return {
+    timerMode: view.timerMode,
     state: view.activeType === 'player' ? 'player' : 'referee',
     activePlayer,
     playerStates: view.players,
@@ -397,6 +399,7 @@ function showMultiplayerGame() {
     connected: multiplayerRoom.participants?.[player.ownerUid]?.connected !== false,
   }));
   renderGameScreen(appEl, toMultiplayerUiState(view), {
+    timerMode: view.timerMode,
     playerCount: players.length,
     players,
   }, {
@@ -500,6 +503,7 @@ function finishMultiplayerGame() {
   lastHistoryBase = {
     players: lastStats.players,
     timerConfig: {
+      timerMode: multiplayerRoom.config.timerMode || 'advanced',
       presetName: 'Multiplayer',
       turnTime: multiplayerRoom.config.turnTimeMs / 1000,
       mainTime: multiplayerRoom.config.mainTimeMs / 1000,
@@ -542,6 +546,7 @@ function startNewGame() {
   }
 
   const gameSettings = {
+    timerMode: settings.timerMode,
     playerCount: activePlayers.length,
     players: activePlayers,
     turnTime: settings.turnTime,
@@ -746,6 +751,7 @@ function buildHistoryData(stats, gameName) {
     gameName,
     players: stats.players,
     timerConfig: {
+      timerMode: settings.timerMode,
       presetName: settings.presetName,
       turnTime: settings.turnTime,
       mainTime: settings.mainTime,
