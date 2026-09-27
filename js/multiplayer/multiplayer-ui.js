@@ -148,14 +148,14 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   const footer = el('div', 'lobby-footer');
   const config = el('div', 'lobby-config');
   if (room.config.timerMode === 'simple') {
-    config.appendChild(el('span', '', '카운트 모드 · 플레이 시간 누적'));
+    config.appendChild(el('span', '', '타이머 방식 · 플레이 시간 누적'));
   } else {
-    config.appendChild(el('span', '', `카운트 모드 · 남은 시간 차감 · 개인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
+    config.appendChild(el('span', '', `타이머 방식 · 남은 시간 차감 · 개인 ${Math.round(room.config.mainTimeMs / 60000)}분`));
     config.appendChild(el('span', '', `턴별 기본 ${Math.round(room.config.turnTimeMs / 1000)}초`));
     config.appendChild(el('span', '', `소진 후 추가 ${Math.round(room.config.penaltyTimeMs / 60000)}분`));
   }
   if (context.isHost) {
-    const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '타이머 방식 변경');
+    const advancedButton = el('button', 'btn-secondary lobby-advanced-toggle', '변경');
     advancedButton.type = 'button';
     advancedButton.addEventListener('click', callbacks.toggleAdvancedSettings);
     config.appendChild(advancedButton);
@@ -165,7 +165,7 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   if (context.isHost && context.showAdvancedSettings) {
     const panel = el('div', 'lobby-advanced-panel');
     const modeField = el('label', 'lobby-advanced-field lobby-mode-field');
-    modeField.appendChild(el('span', '', '카운트 모드'));
+    modeField.appendChild(el('span', '', '타이머 방식'));
     const modeSelect = document.createElement('select');
     modeSelect.append(
       Object.assign(document.createElement('option'), { value: 'simple', textContent: '플레이 시간 누적' }),
@@ -211,7 +211,9 @@ export function renderLobbyScreen(container, room, context, callbacks) {
       mainTimeMs: Number(inputs.mainTimeMs.input.value) * inputs.mainTimeMs.multiplier,
       penaltyTimeMs: Number(inputs.penaltyTimeMs.input.value) * inputs.penaltyTimeMs.multiplier,
     }));
-    panel.append(cancelButton, applyButton);
+    const actions = el('div', 'lobby-advanced-actions');
+    actions.append(cancelButton, applyButton);
+    panel.appendChild(actions);
     right.appendChild(panel);
   }
 

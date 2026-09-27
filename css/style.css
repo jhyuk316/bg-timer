@@ -768,6 +768,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 .lobby-advanced-field select { padding: 0.35rem; border: 1px solid var(--surface2); border-radius: 5px; background: var(--bg); color: var(--text); }
 .lobby-mode-field { grid-template-columns: auto minmax(7rem, auto); }
 .lobby-advanced-field input:disabled { opacity: 0.45; }
+.lobby-advanced-actions { display: flex; gap: 0.5rem; margin-left: auto; }
 .lobby-advanced-panel .btn-primary, .lobby-advanced-panel .btn-secondary { padding: 0.4rem 0.7rem; font-size: 0.72rem; }
 .lobby-footer .btn-primary, .lobby-footer .btn-secondary { padding: 0.55rem 1rem; font-size: 0.82rem; }
 
