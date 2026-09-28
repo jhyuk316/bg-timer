@@ -555,29 +555,6 @@ button:disabled { opacity: 0.4; cursor: default; }
   background: #d14343;
   vertical-align: middle;
 }
-.mode-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: min(240px, 42vw);
-  margin: 0 auto 0.6rem;
-  padding: 2px;
-  border: 1px solid var(--surface2);
-  border-radius: 7px;
-  background: var(--bg2);
-  flex-shrink: 0;
-}
-.mode-switch-btn {
-  min-height: 32px;
-  padding: 0.35rem 1rem;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-dim);
-}
-.mode-switch-btn.active {
-  background: var(--surface2);
-  color: var(--text);
-}
-
 /* === Multiplayer entry === */
 .multi-entry-wrap {
   flex: 1;

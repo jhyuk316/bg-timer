@@ -1,8 +1,7 @@
-import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, TIMER_PRESETS, COLOR_PRESETS, COLOR_PALETTE } from './settings.js';
-import { createGame } from './timer.js';
-import { initSound, setSoundEnabled, playTurnStart, playTurnEnd, playMainWarning, playPenaltyAlert } from './sound.js';
+import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, COLOR_PALETTE } from './settings.js';
+import { initSound, setSoundEnabled } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
-import { renderSettingsScreen, renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, flashScreen, renderGlobalBar, updateGlobalBar } from './ui.js';
+import { renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, renderGlobalBar, updateGlobalBar } from './ui.js';
 import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/multiplayer-ui.js';
 import { formatRoomCode, normalizeRoomCode } from './multiplayer/room-code.js';
 import {
@@ -33,12 +32,9 @@ import { getServerNow, subscribeConnection } from './multiplayer/firebase-client
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
-let game = null;
 let currentScreen = 'settings';
-let settingsPage = 1;
 let lastStats = null;
 let lastSavedGame = null;
-let appMode = 'single';
 let multiplayerSession = null;
 let multiplayerRoom = null;
 let multiplayerError = '';
@@ -84,7 +80,6 @@ function showScreen(name) {
   currentScreen = name;
   switch (name) {
     case 'settings': showSettings(); break;
-    case 'game': showGame(); break;
     case 'stats': showStats(); break;
     case 'history': showHistory(); break;
     case 'lobby': showLobby(); break;
@@ -99,115 +94,7 @@ function restoreGlobalBar() {
 // --- Settings ---
 
 function showSettings() {
-  if (appMode === 'multi') {
-    showMultiplayerEntry();
-    return;
-  }
-  renderSettingsScreen(appEl, settings, settingsPage, {
-    mode: appMode,
-    setMode,
-    toggleMeeple(index) {
-      if (settings.activeMeeples[index]) {
-        settings.activeMeeples[index] = false;
-      } else {
-        const activeCount = settings.activeMeeples.filter(Boolean).length;
-        if (activeCount >= 6) return 'max';
-        settings.activeMeeples[index] = true;
-      }
-      settings.playerCount = settings.activeMeeples.filter(Boolean).length;
-      saveSettings(settings);
-      showSettings();
-    },
-    setPlayerName(paletteIndex, name) {
-      settings.players[paletteIndex].name = name || COLOR_PALETTE[paletteIndex].name;
-      saveSettings(settings);
-    },
-    applyColorPreset(name) {
-      const preset = COLOR_PRESETS[name];
-      if (!preset) return;
-      // Deactivate all, then activate only paletteMap indices
-      settings.activeMeeples = new Array(10).fill(false);
-      for (const idx of preset.paletteMap) {
-        settings.activeMeeples[idx] = true;
-      }
-      settings.playerCount = settings.activeMeeples.filter(Boolean).length;
-      saveSettings(settings);
-      showSettings();
-    },
-    clearAllMeeples() {
-      settings.activeMeeples = new Array(10).fill(false);
-      settings.playerCount = 0;
-      saveSettings(settings);
-      showSettings();
-    },
-    openAdvancedSettings() {
-      const activeCount = settings.activeMeeples.filter(Boolean).length;
-      if (activeCount === 0) return 'empty';
-      settings.timerMode = 'advanced';
-      saveSettings(settings);
-      settingsPage = 2;
-      showSettings();
-    },
-    startSimpleGame() {
-      const activeCount = settings.activeMeeples.filter(Boolean).length;
-      if (activeCount === 0) return 'empty';
-      settings.timerMode = 'simple';
-      saveSettings(settings);
-      startNewGame();
-    },
-    goToPage1() {
-      settingsPage = 1;
-      showSettings();
-    },
-    setPreset(name) {
-      const p = TIMER_PRESETS[name];
-      if (!p) return;
-      settings.presetName = name;
-      settings.turnTime = p.turnTime;
-      settings.mainTime = p.mainTime;
-      settings.penaltyTime = p.penaltyTime;
-      saveSettings(settings);
-      showSettings();
-    },
-    setTimerValue(key, value) {
-      settings[key] = value;
-      settings.presetName = 'Custom';
-      settings.customValues = {
-        turnTime: settings.turnTime,
-        mainTime: settings.mainTime,
-        penaltyTime: settings.penaltyTime,
-      };
-      saveSettings(settings);
-    },
-    setCustomPreset() {
-      if (!settings.customValues) return;
-      settings.presetName = 'Custom';
-      settings.turnTime = settings.customValues.turnTime;
-      settings.mainTime = settings.customValues.mainTime;
-      settings.penaltyTime = settings.customValues.penaltyTime;
-      saveSettings(settings);
-      showSettings();
-    },
-    openHistory() {
-      showScreen('history');
-    },
-    startGame() {
-      settings.timerMode = 'advanced';
-      saveSettings(settings);
-      startNewGame();
-    },
-  });
-  restoreGlobalBar();
-}
-
-function setMode(mode) {
-  appMode = mode;
-  multiplayerError = '';
-  if (mode === 'single') {
-    unsubscribeRoom?.();
-    unsubscribeRoom = null;
-  }
-  showScreen('settings');
+  showMultiplayerEntry();
 }
 
 function showMultiplayerEntry() {
@@ -218,7 +105,7 @@ function showMultiplayerEntry() {
     error: multiplayerError,
     loading: multiplayerLoading,
   }, {
-    setMode,
+    openHistory() { showScreen('history'); },
     async createRoom() {
       await runMultiplayerAction(async () => {
         const config = buildDefaultMultiplayerConfig(settings);
@@ -402,7 +289,7 @@ function toMultiplayerUiState(view) {
 }
 
 function renderMultiplayerTick() {
-  if (currentScreen !== 'game' || appMode !== 'multi' || !multiplayerRoom?.game) return;
+  if (currentScreen !== 'game' || !multiplayerRoom?.game) return;
   const view = deriveGameView(multiplayerRoom, getServerNow());
   updateGameUI(toMultiplayerUiState(view));
   multiplayerFrame = requestAnimationFrame(renderMultiplayerTick);
@@ -553,220 +440,6 @@ async function runLobbyAction(action) {
   }
 }
 
-// --- Game ---
-
-function startNewGame() {
-  // Build game settings from activeMeeples
-  const activePlayers = [];
-  for (let i = 0; i < 10; i++) {
-    if (settings.activeMeeples[i]) {
-      activePlayers.push({
-        name: settings.players[i].name,
-        color: COLOR_PALETTE[i].hex,
-      });
-    }
-  }
-
-  const gameSettings = {
-    timerMode: settings.timerMode,
-    playerCount: activePlayers.length,
-    players: activePlayers,
-    turnTime: settings.turnTime,
-    mainTime: settings.mainTime,
-    penaltyTime: settings.penaltyTime,
-  };
-
-  game = createGame(gameSettings);
-  lastStats = null;
-  lastSavedGame = null;
-  lastHistoryBase = null;
-
-  game.onTick(() => {
-    updateGameUI(game.getState());
-  });
-
-  game.onEvent((event, data) => {
-    switch (event) {
-      case 'playerStart':
-        playTurnStart();
-        break;
-      case 'playerSwitch':
-        playTurnStart();
-        break;
-      case 'refereeStart':
-        playTurnEnd();
-        break;
-      case 'mainWarning':
-        playMainWarning();
-        break;
-      case 'penalty':
-        playPenaltyAlert();
-        flashScreen();
-        break;
-      case 'reset':
-        updateGameUI(game.getState());
-        break;
-    }
-  });
-
-  // Reset settings page for next time
-  settingsPage = 1;
-  game.start();
-  showScreen('game');
-}
-
-function showGame() {
-  // Build active players for rendering
-  const activePlayers = [];
-  for (let i = 0; i < 10; i++) {
-    if (settings.activeMeeples[i]) {
-      activePlayers.push({
-        name: settings.players[i].name,
-        color: COLOR_PALETTE[i].hex,
-      });
-    }
-  }
-
-  const renderSettings = {
-    playerCount: activePlayers.length,
-    players: activePlayers,
-  };
-
-  const state = game.getState();
-  renderGameScreen(appEl, state, renderSettings);
-  updateGameUI(state);
-  wireGameControls();
-  restoreGlobalBar();
-}
-
-function wireGameControls() {
-  const grid = document.getElementById('player-grid');
-  const areas = appEl.querySelectorAll('.player-area');
-
-  // --- Long press drag-to-swap state ---
-  let longPressTimer = null;
-  let isDragging = false;
-  let dragSource = null;
-  let startX = 0;
-  let startY = 0;
-  const LONG_PRESS_MS = 500;
-  const MOVE_THRESHOLD = 10;
-
-  function canDrag() {
-    const state = game.getState().state;
-    return state === 'referee' || state === 'idle';
-  }
-
-  function getPointerPos(e) {
-    if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    return { x: e.clientX, y: e.clientY };
-  }
-
-  function getAreaAtPoint(x, y) {
-    const els = document.elementsFromPoint(x, y);
-    return els.find(el => el.classList && el.classList.contains('player-area')) || null;
-  }
-
-  function swapDOM(a, b) {
-    if (a === b) return;
-    const parent = a.parentNode;
-    const aNext = a.nextSibling === b ? a : a.nextSibling;
-    parent.insertBefore(a, b);
-    parent.insertBefore(b, aNext);
-  }
-
-  function startDrag(area) {
-    isDragging = true;
-    dragSource = area;
-    area.classList.add('dragging');
-    try { navigator.vibrate(50); } catch (e) { /* unsupported */ }
-  }
-
-  function endDrag() {
-    if (dragSource) dragSource.classList.remove('dragging');
-    grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    isDragging = false;
-    dragSource = null;
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-
-  function handlePointerDown(e, area) {
-    if (!canDrag()) return;
-    const pos = getPointerPos(e);
-    startX = pos.x;
-    startY = pos.y;
-    longPressTimer = setTimeout(() => startDrag(area), LONG_PRESS_MS);
-  }
-
-  function handlePointerMove(e) {
-    const pos = getPointerPos(e);
-    if (longPressTimer && !isDragging) {
-      const dx = pos.x - startX;
-      const dy = pos.y - startY;
-      if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-      return;
-    }
-    if (!isDragging) return;
-    e.preventDefault();
-    const target = getAreaAtPoint(pos.x, pos.y);
-    grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    if (target && target !== dragSource && target.classList.contains('player-area')) {
-      target.classList.add('drag-over');
-    }
-  }
-
-  function handlePointerUp(e) {
-    if (longPressTimer && !isDragging) {
-      clearTimeout(longPressTimer);
-      longPressTimer = null;
-      return; // normal tap — let click handler fire
-    }
-    if (!isDragging) return;
-    const pos = e.changedTouches
-      ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
-    const target = getAreaAtPoint(pos.x, pos.y);
-    if (target && target !== dragSource && target.classList.contains('player-area')) {
-      swapDOM(dragSource, target);
-    }
-    endDrag();
-  }
-
-  // Wire touch + mouse events on each player area
-  areas.forEach((area) => {
-    // Tap handler
-    area.addEventListener('click', (e) => {
-      if (isDragging) { e.preventDefault(); return; }
-      const idx = parseInt(area.dataset.player, 10);
-      game.tapPlayer(idx);
-    });
-
-    // Touch events
-    area.addEventListener('touchstart', (e) => handlePointerDown(e, area), { passive: true });
-    // Mouse events
-    area.addEventListener('mousedown', (e) => { if (e.button === 0) handlePointerDown(e, area); });
-  });
-
-  // Move & up on grid (capture drag across areas)
-  grid.addEventListener('touchmove', handlePointerMove, { passive: false });
-  grid.addEventListener('touchend', handlePointerUp);
-  grid.addEventListener('touchcancel', endDrag);
-  grid.addEventListener('mousemove', handlePointerMove);
-  grid.addEventListener('mouseup', handlePointerUp);
-  grid.addEventListener('mouseleave', endDrag);
-
-  document.getElementById('btn-end').addEventListener('click', () => {
-    if (confirm('게임을 종료할까요?')) {
-      finishGame();
-      showScreen('stats');
-    }
-  });
-}
-
 function buildHistoryData(stats, gameName) {
   if (lastHistoryBase) return { ...lastHistoryBase, gameName, stats };
   return {
@@ -783,17 +456,12 @@ function buildHistoryData(stats, gameName) {
   };
 }
 
-function finishGame() {
-  lastStats = game.end();
-  lastSavedGame = saveHistory(buildHistoryData(lastStats));
-}
-
 // --- Stats ---
 
 function showStats() {
   if (!lastStats) return showSettings();
   const names = getGameNames();
-  const canSave = appMode !== 'multi' || multiplayerRoom?.hostUid === multiplayerSession?.uid;
+  const canSave = multiplayerRoom?.hostUid === multiplayerSession?.uid;
   renderStatsScreen(appEl, lastStats, names, {
     canSave,
     gameName: lastSavedGame?.gameName,
@@ -897,7 +565,6 @@ async function resumeMultiplayerIfNeeded() {
   const searchParams = new URLSearchParams(location.search);
   const queryCode = normalizeRoomCode(searchParams.get('r') || searchParams.get('room') || '');
   if (queryCode) {
-    appMode = 'multi';
     showScreen('settings');
     await runMultiplayerAction(async () => enterLobby(await joinMultiplayerRoom(queryCode)));
     return;
@@ -906,11 +573,10 @@ async function resumeMultiplayerIfNeeded() {
   try {
     const session = await restoreRoom();
     if (session) {
-      appMode = 'multi';
       enterLobby(session);
     }
   } catch {
-    // A stale or offline room should not prevent single mode startup.
+    // A stale room should not prevent opening the room entry screen.
   }
 }
 
