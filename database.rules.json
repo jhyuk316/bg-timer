@@ -2,6 +2,15 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "gameRecords": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$recordId": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['id', 'gameName', 'date', 'players', 'timerConfig', 'stats']) && newData.child('id').val() === $recordId && newData.child('gameName').isString() && newData.child('gameName').val().length <= 100 && newData.child('date').isString()"
+        }
+      }
+    },
     "roomCodes": {
       "$code": {
         ".read": "auth != null && $code.matches(/^[0-9]{6}$/)",
