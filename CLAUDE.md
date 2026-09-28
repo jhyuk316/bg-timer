@@ -12,9 +12,9 @@
 
 ```
 js/app.js        # 앱 초기화, 화면 전환
-js/timer.js      # 타이머 코어 로직
+js/multiplayer/  # 방과 게임 상태, Firebase 동기화
 js/settings.js   # 설정 관리, 색상 팔레트/프리셋, localStorage
-js/ui.js         # DOM 렌더링 (설정/게임/통계/히스토리 화면)
+js/ui.js         # DOM 렌더링 (게임/통계/히스토리 화면)
 js/sound.js      # Web Audio API 알림 사운드
 js/history.js    # 히스토리 저장/조회
 css/style.css    # 전체 스타일 (단일 파일)
@@ -39,4 +39,4 @@ npx live-server --port=8080
 - 색상 팔레트: 채도를 낮춘 뮤트 톤 10색
 - 색상 프리셋: 보드게임별 고유 색상 (팔레트와 독립)
 - 가로 모드 강제 적용 (portrait → rotate 90deg)
-- 설정 화면: 2페이지 위자드 (페이지1: 미플 선택 + 프리셋, 페이지2: 타이머 설정)
+- 첫 화면: 방 만들기, 방 참가, 지난 게임. 방장은 대기실에서 플레이어와 타이머를 설정

@@ -4,8 +4,8 @@
 
 ## 주요 기능
 
-- **1~6인 플레이어** 지원, 이름/미플 색상 커스텀 (10색 팔레트 + 6종 보드게임 프리셋)
-- **멀티플레이**: 숫자 6자리 방 코드/QR 참가, 여러 기기의 턴 조작과 재접속 동기화
+- **1~6인 플레이어** 지원, 대기실에서 이름과 미플 색상 선택 (10색 팔레트)
+- **방 기반 게임**: 혼자 방을 만들어 시작하거나 숫자 6자리 방 코드/QR로 여러 기기가 참가
 - **대기실 접속 관리**: 1초 접속 신호, 5초 미응답 게스트 정리, 방장의 명시적 나가기 시 대기실 종료
 - **하이브리드 타이머**: 턴 딜레이(Fischer) + 메인 시간(Byoyomi) + 패널티(Scrabble)
 - **자유 선택 조작**: 아무 플레이어나 탭하여 턴 전환, 직접 전환 숏컷
@@ -13,7 +13,7 @@
 - **알림**: 메인 시간 진입 경고, 5분 TTS 음성 알림, 턴 시작/종료 사운드
 - **게임 통계**: 종료 후 플레이어별 소요시간/턴수/패널티 + Gantt 차트
 - **히스토리**: 게임 결과 저장 및 과거 기록 열람
-- **PWA**: 오프라인 지원, 홈 화면 추가 가능
+- **PWA**: 홈 화면 추가 가능 (게임 진행에는 네트워크 연결 필요)
 
 ## 기술 스택
 
@@ -33,7 +33,7 @@ npx live-server --port=8080
 
 브라우저에서 `http://localhost:8080` 접속.
 
-멀티플레이에는 Firebase 프로젝트 `bg-timer-1b7ad`의 익명 인증과 Realtime Database 규칙이 필요하다. 브라우저는 실행 시 공식 Firebase CDN의 JS SDK `12.19.0`을 불러오므로 멀티플레이에는 네트워크 연결이 필요하다. 싱글 모드는 Firebase 없이도 동작한다. 규칙은 `database.rules.json`에 보관하며, 배포 전 `tests/rules/database-rules-cases.md`의 허용/거부 사례를 확인한다.
+첫 화면에서 `방 만들기`를 누른 뒤 플레이어를 1명 이상 선택하고 `준비 완료`를 누르면 혼자서도 시작할 수 있다. 다른 기기와 함께하려면 방 코드 또는 QR로 참가한다. 게임에는 Firebase 프로젝트 `bg-timer-1b7ad`의 익명 인증과 Realtime Database 연결이 필요하다. 브라우저는 실행 시 공식 Firebase CDN의 JS SDK `12.19.0`을 불러온다. 규칙은 `database.rules.json`에 보관하며, 배포 전 `tests/rules/database-rules-cases.md`의 허용/거부 사례를 확인한다.
 
 ## 배포
 
@@ -48,9 +48,8 @@ bg-timer/
 │   └── style.css
 ├── js/
 │   ├── app.js          # 앱 초기화, 화면 전환
-│   ├── timer.js        # 타이머 로직 (코어)
-│   ├── settings.js     # 설정 관리, 색상 팔레트/프리셋, localStorage
-│   ├── ui.js           # DOM 렌더링 (설정/게임/통계/히스토리 화면)
+│   ├── settings.js     # 설정 관리, 색상 팔레트, localStorage
+│   ├── ui.js           # DOM 렌더링 (게임/통계/히스토리 화면)
 │   ├── sound.js        # 알림 사운드 (Web Audio API)
 │   ├── history.js      # 히스토리 저장/조회
 │   └── multiplayer/    # 방, Firebase, 게임 이벤트 동기화
@@ -62,27 +61,6 @@ bg-timer/
 └── icons/
     └── meeple.svg
 ```
-
-## 타이머 프리셋
-
-| 프리셋 | 목표/인 | 턴 딜레이 | 메인 시간 | 패널티 추가시간 |
-|--------|--------|----------|----------|---------------|
-| Light | 15분 | 10초 | 10분 | 1분 |
-| Medium Light | 30분 | 15초 | 20분 | 2분 |
-| Medium | 1시간 | 20초 | 50분 | 3분 |
-| Medium Heavy | 1.5시간 | 30초 | 75분 | 4분 |
-| Heavy | 2시간 | 45초 | 100분 | 5분 |
-
-## 색상 프리셋
-
-| 프리셋 | 인원 | 색상 |
-|--------|------|------|
-| SETI | 4인 | Orange, Green, Purple, Ivory |
-| 백로성 | 4인 | Crimson, Amber, Green, Cobalt |
-| 버건디의 성 | 4인 | Crimson, Green, Cobalt, Charcoal |
-| 엔데버 심해 | 5인 | Crimson, Amber, Teal, Purple, Ivory |
-| 윙스팬 | 5인 | Crimson, Amber, Green, Cobalt, Purple |
-| Ian O'Toole | 5인 | Crimson, Amber, Green, Sky, Purple |
 
 ## 아이콘 출처
 

@@ -45,6 +45,14 @@ test('accepts between one and six selected players', () => {
   assert.equal(canStartGame(invalid), false);
 });
 
+test('host can start alone with one selected player after getting ready', () => {
+  const room = makeRoom({ playerCount: 1 });
+  delete room.participants.guest;
+  assert.equal(canStartGame(room), true);
+  room.participants.host.ready = false;
+  assert.equal(canStartGame(room), false);
+});
+
 test('requires every connected participant to be ready', () => {
   assert.equal(canStartGame(makeRoom({ guestReady: false })), false);
   const room = makeRoom({ guestReady: false, guestConnected: false });

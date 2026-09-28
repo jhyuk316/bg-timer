@@ -42,7 +42,7 @@ test('saved timer mode is restored', () => {
   }
 });
 
-test('multiplayer rooms default to simple mode independently of single settings', () => {
+test('rooms default to simple mode independently of saved timer settings', () => {
   const config = buildDefaultMultiplayerConfig({
     timerMode: 'advanced',
     turnTime: 20,

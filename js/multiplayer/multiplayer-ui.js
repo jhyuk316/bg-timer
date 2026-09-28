@@ -10,31 +10,17 @@ function el(tag, className, text) {
   return element;
 }
 
-function renderModeSwitch(mode, onChange) {
-  const control = el('div', 'mode-switch');
-  for (const [value, label] of [['single', '싱글'], ['multi', '멀티']]) {
-    const button = el('button', `mode-switch-btn${mode === value ? ' active' : ''}`, label);
-    button.type = 'button';
-    button.addEventListener('click', () => onChange(value));
-    control.appendChild(button);
-  }
-  return control;
-}
-
 export function renderMultiplayerEntryScreen(container, state, callbacks) {
   container.innerHTML = '';
   const wrap = el('div', 'multi-entry-wrap');
   const header = el('div', 'multi-entry-header');
-  header.append(
-    el('h1', 'settings-title', 'Board Game Timer'),
-    renderModeSwitch('multi', callbacks.setMode),
-  );
+  header.appendChild(el('h1', 'settings-title', 'Board Game Timer'));
   wrap.appendChild(header);
 
   const actions = el('div', 'multi-entry-actions');
   const createSection = el('section', 'multi-entry-section');
   createSection.appendChild(el('h2', 'multi-entry-title', '새 게임'));
-  createSection.appendChild(el('p', 'multi-entry-copy', '방을 만들고 QR 코드로 함께 접속하세요.'));
+  createSection.appendChild(el('p', 'multi-entry-copy', '혼자 시작하거나 QR 코드로 함께 접속하세요.'));
   const createButton = el('button', 'btn-primary', state.loading ? '방 만드는 중...' : '방 만들기');
   createButton.disabled = state.loading;
   createButton.addEventListener('click', callbacks.createRoom);
@@ -63,6 +49,10 @@ export function renderMultiplayerEntryScreen(container, state, callbacks) {
 
   actions.append(createSection, joinSection);
   wrap.appendChild(actions);
+  const historyButton = el('button', 'btn-secondary', '지난 게임');
+  historyButton.type = 'button';
+  historyButton.addEventListener('click', callbacks.openHistory);
+  wrap.appendChild(historyButton);
   if (state.error) wrap.appendChild(el('div', 'multi-error', state.error));
   container.appendChild(wrap);
 }
