@@ -107,9 +107,10 @@ function buildLobby(variant) {
   const main = el('section', 'lobby-main');
   const titleRow = el('div', 'lobby-title-row prototype-title-row');
   titleRow.appendChild(el('h1', 'lobby-title', '플레이어 2/6'));
+  if (variant === 'B') titleRow.appendChild(buildPresetControls(variant));
   titleRow.appendChild(el('span', 'prototype-notice', activePreset ? `${activePreset} 색상만 강조 중 · 선택 인원은 그대로` : '색상 강조 꺼짐'));
   main.appendChild(titleRow);
-  if (variant !== 'C') main.appendChild(buildPresetControls(variant));
+  if (variant === 'A') main.appendChild(buildPresetControls(variant));
 
   const grid = el('div', 'lobby-player-grid prototype-player-grid');
   const highlightIndices = activePreset ? COLOR_PRESETS[activePreset].paletteMap : [];
@@ -137,6 +138,18 @@ function buildLobby(variant) {
   return wrap;
 }
 
+function buildGlobalBar() {
+  const bar = el('div', 'global-bar prototype-global-bar');
+  const sound = el('button', '', '🔊');
+  sound.type = 'button';
+  sound.setAttribute('aria-label', '음소거');
+  const fullscreen = el('button', '', '⛶');
+  fullscreen.type = 'button';
+  fullscreen.setAttribute('aria-label', '전체 화면');
+  bar.append(sound, fullscreen);
+  return bar;
+}
+
 function buildSwitcher(variant) {
   const keys = Object.keys(VARIANTS);
   const index = keys.indexOf(variant);
@@ -155,7 +168,7 @@ function buildSwitcher(variant) {
 export function renderColorPresetPrototype(container) {
   const variant = currentVariant();
   container.innerHTML = '';
-  container.append(buildLobby(variant), buildSwitcher(variant));
+  container.append(buildLobby(variant), buildGlobalBar(), buildSwitcher(variant));
   document.onkeydown = (event) => {
     if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || event.target.matches('input, textarea, [contenteditable]')) return;
     const keys = Object.keys(VARIANTS);
