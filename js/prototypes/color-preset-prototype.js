@@ -30,18 +30,10 @@ function setVariant(key) {
 }
 
 function presetButton(name, compact = false) {
-  const preset = COLOR_PRESETS[name];
   const button = el('button', `prototype-preset${compact ? ' compact' : ''}${activePreset === name ? ' active' : ''}`);
   button.type = 'button';
   button.setAttribute('aria-pressed', String(activePreset === name));
   button.appendChild(el('span', 'prototype-preset-name', name));
-  const swatches = el('span', 'prototype-swatches');
-  preset.paletteMap.forEach((index) => {
-    const dot = el('span', 'prototype-swatch');
-    dot.style.background = COLOR_PALETTE[index].hex;
-    swatches.appendChild(dot);
-  });
-  button.appendChild(swatches);
   button.addEventListener('click', () => {
     activePreset = activePreset === name ? null : name;
     renderColorPresetPrototype(document.getElementById('app'));

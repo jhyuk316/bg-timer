@@ -22,21 +22,18 @@
 .prototype-controls.variant-a { display: flex; align-items: center; gap: .35rem; padding: .35rem 0 .45rem; overflow-x: auto; }
 .prototype-controls-label { color: var(--text-dim); font-size: .65rem; white-space: nowrap; }
 .prototype-preset {
-  display: flex; align-items: center; justify-content: space-between; gap: .65rem; min-width: 150px;
+  display: flex; align-items: center; justify-content: flex-start; min-width: 0;
   padding: .5rem .6rem; background: var(--surface); border: 1px solid var(--surface2); border-radius: 8px;
 }
 .prototype-preset.compact { min-width: auto; padding: .32rem .48rem; gap: .4rem; font-size: .66rem; white-space: nowrap; }
 .prototype-preset.active { border-color: #8ea9c8; background: #2d3a4b; }
 .prototype-preset-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.prototype-swatches { display: inline-flex; gap: 2px; }
-.prototype-swatch { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px #fff4; }
-.prototype-preset.compact .prototype-swatch { width: 8px; height: 8px; }
 .prototype-preset-details { position: relative; padding: 0; }
 .prototype-open-button { display: inline-flex; align-items: center; gap: .55rem; padding: .45rem .7rem; border-radius: 7px; background: var(--surface); cursor: pointer; font-size: .72rem; }
 .prototype-open-button::marker { content: ''; }
 .prototype-current-name { color: #9fb9d7; }
 .prototype-preset-panel {
-  position: absolute; z-index: 20; top: calc(100% + .3rem); left: 0; width: min(520px, 75vw);
+  position: absolute; z-index: 20; top: calc(100% + .3rem); right: 0; width: min(320px, calc(100vw - 2rem));
   padding: .6rem; background: #202536; border: 1px solid #556074; border-radius: 10px; box-shadow: 0 12px 30px #0009;
 }
 .prototype-panel-help { margin: 0 0 .45rem; color: var(--text-dim); font-size: .68rem; }
@@ -58,6 +55,6 @@
 @media (max-width: 760px) {
   .prototype-notice { display: none; }
   .prototype-controls.variant-a { max-width: calc(100vw - 220px); }
-  .prototype-preset-panel { width: min(420px, 70vw); }
+  .prototype-preset-panel { width: min(300px, calc(100vw - 1rem)); }
   .prototype-cycle-label { display: none; }
 }
