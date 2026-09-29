@@ -67,6 +67,7 @@ function appendEvent(game, { type, actorUid, playerId, activeType, status = 'run
 }
 
 let host;
+let guestForCleanup;
 let roomCreated = false;
 let codeCreated = false;
 
@@ -75,6 +76,7 @@ try {
     anonymousUser(), anonymousUser(), anonymousUser(), anonymousUser(),
   ]);
   host = h;
+  guestForCleanup = guest;
 
   const config = { turnTimeMs: 20000, mainTimeMs: 2400000, penaltyTimeMs: 300000 };
   const colors = ['#d95656', '#db9554', '#d4af54', '#58a571', '#57a4a1', '#65a8c2'];
@@ -161,7 +163,24 @@ try {
   await check('host ends game', true, gamePath, 'PUT', host, hostEnd);
   await check('host closes room', true, `${roomPath}/status`, 'PUT', host, 'ended');
   await check('ended room cannot change player order', false, `${roomPath}/playerOrder`, 'PUT', guest, 'p0,p1,p2');
+
+  const record = {
+    id: roomId,
+    gameName: 'Rules test',
+    date: new Date().toISOString(),
+    players: ['p0', 'p1'],
+    timerConfig: { timerMode: 'simple' },
+    stats: { totalPlayTime: 1000, players: [] },
+  };
+  await check('host saves own game record', true, `gameRecords/${host.uid}/${roomId}`, 'PUT', host, record);
+  await check('guest saves own game record', true, `gameRecords/${guest.uid}/${roomId}`, 'PUT', guest, record);
+  await check('host reads own game record', true, `gameRecords/${host.uid}/${roomId}`, 'GET', host);
+  await check('guest reads own game record', true, `gameRecords/${guest.uid}/${roomId}`, 'GET', guest);
+  await check('host cannot read guest record', false, `gameRecords/${guest.uid}/${roomId}`, 'GET', host);
+  await check('guest cannot change host record', false, `gameRecords/${host.uid}/${roomId}`, 'PATCH', guest, { gameName: 'wrong' });
 } finally {
+  if (host) await databaseRequest(`gameRecords/${host.uid}/${roomId}`, 'DELETE', host).catch(() => {});
+  if (guestForCleanup) await databaseRequest(`gameRecords/${guestForCleanup.uid}/${roomId}`, 'DELETE', guestForCleanup).catch(() => {});
   if (host && codeCreated) {
     await databaseRequest(`roomCodes/${code}`, 'DELETE', host).catch(() => {});
   }
