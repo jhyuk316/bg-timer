@@ -9,6 +9,11 @@
 .prototype-title-row .prototype-controls { margin-left: auto; }
 .prototype-player-grid { position: relative; }
 .prototype-player-grid .lobby-player { position: relative; transition: opacity .2s, box-shadow .2s, background .2s, transform .2s; }
+.prototype-player-grid .lobby-player.selected {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--player-color) 24%, var(--surface));
+}
+.prototype-player-grid .lobby-player.mine { box-shadow: none; }
 .prototype-player-grid .lobby-meeple { position: relative; isolation: isolate; transition: filter .2s; }
 .prototype-player-grid .lobby-meeple svg { position: relative; z-index: 1; }
 .prototype-player-grid .lobby-meeple::before {
