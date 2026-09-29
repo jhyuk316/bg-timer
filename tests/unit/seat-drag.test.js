@@ -13,6 +13,10 @@ function area(index) {
     },
     closest: () => null,
     setPointerCapture: () => {},
+    getBoundingClientRect: () => ({ left: index * 100, right: index * 100 + 100, top: 0, width: 100, height: 100 }),
+    cloneNode: () => ({
+      classList: { add() {} }, style: {}, remove() {}, removeAttribute() {}, querySelectorAll: () => [],
+    }),
   };
 }
 
@@ -27,7 +31,12 @@ test('long press moves a seat and suppresses the following turn click', async ()
     querySelector: () => null,
   };
   const originalDocument = globalThis.document;
-  globalThis.document = { elementsFromPoint: (x) => [x > 100 ? target : source] };
+  const originalWindow = globalThis.window;
+  globalThis.window = { matchMedia: () => ({ matches: false }) };
+  globalThis.document = {
+    elementsFromPoint: (x) => [x > 100 ? target : source],
+    body: { appendChild() {} },
+  };
   try {
     const swaps = [];
     bindSeatDrag(grid, (...indices) => swaps.push(indices));
@@ -41,5 +50,6 @@ test('long press moves a seat and suppresses the following turn click', async ()
     assert.equal(blocked, true);
   } finally {
     globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
   }
 });

@@ -5,6 +5,13 @@ export function bindSeatDrag(grid, onSwap) {
   let startX = 0;
   let startY = 0;
   let suppressClick = false;
+  let preview = null;
+  let portrait = false;
+
+  const movePreview = (x, y) => {
+    if (!preview) return;
+    preview.style.transform = `translate3d(${x - startX}px, ${y - startY}px, 0)${portrait ? ' rotate(90deg)' : ''}`;
+  };
 
   const areaAt = (x, y) => document.elementsFromPoint(x, y)
     .find((element) => element.classList?.contains('player-area') && grid.contains(element));
@@ -14,6 +21,8 @@ export function bindSeatDrag(grid, onSwap) {
     pressTimer = null;
     source?.classList.remove('dragging');
     grid.querySelector('.drag-over')?.classList.remove('drag-over');
+    preview?.remove();
+    preview = null;
     source = null;
     pointerId = null;
   };
@@ -35,6 +44,18 @@ export function bindSeatDrag(grid, onSwap) {
     area.setPointerCapture(event.pointerId);
     pressTimer = setTimeout(() => {
       source = area;
+      const previewRect = area.getBoundingClientRect();
+      portrait = window.matchMedia('(orientation: portrait)').matches;
+      preview = area.cloneNode(true);
+      preview.removeAttribute('id');
+      preview.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      preview.classList.add('seat-drag-preview');
+      preview.style.left = `${portrait ? previewRect.right : previewRect.left}px`;
+      preview.style.top = `${previewRect.top}px`;
+      preview.style.width = `${portrait ? previewRect.height : previewRect.width}px`;
+      preview.style.height = `${portrait ? previewRect.width : previewRect.height}px`;
+      movePreview(startX, startY);
+      document.body.appendChild(preview);
       area.classList.add('dragging');
       try { navigator.vibrate?.(40); } catch { /* unsupported */ }
     }, 500);
@@ -48,6 +69,7 @@ export function bindSeatDrag(grid, onSwap) {
     }
     if (!source) return;
     event.preventDefault();
+    movePreview(event.clientX, event.clientY);
     grid.querySelector('.drag-over')?.classList.remove('drag-over');
     const target = areaAt(event.clientX, event.clientY);
     if (target && target !== source) target.classList.add('drag-over');
