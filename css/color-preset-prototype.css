@@ -9,12 +9,32 @@
 .prototype-title-row .prototype-controls { margin-left: auto; }
 .prototype-player-grid { position: relative; }
 .prototype-player-grid .lobby-player { position: relative; transition: opacity .2s, box-shadow .2s, background .2s, transform .2s; }
-.prototype-player-grid .lobby-meeple { transition: transform .2s, filter .2s; }
-.prototype-player-grid.highlight-a .preset-highlighted .lobby-meeple { transform: scale(1.2); }
-.prototype-player-grid.highlight-b .preset-highlighted .lobby-meeple {
-  filter: drop-shadow(0 0 5px var(--player-color)) drop-shadow(0 0 10px var(--player-color));
+.prototype-player-grid .lobby-meeple { position: relative; isolation: isolate; transition: filter .2s; }
+.prototype-player-grid .lobby-meeple svg { position: relative; z-index: 1; }
+.prototype-player-grid .lobby-meeple::before {
+  content: ''; position: absolute; z-index: 0; pointer-events: none; border-radius: 50%; opacity: 0;
+  transition: opacity .2s;
 }
-.prototype-player-grid .preset-recommendation { color: var(--player-color); font-weight: 700; opacity: 1; }
+.prototype-player-grid.highlight-a .preset-highlighted .lobby-meeple {
+  filter:
+    drop-shadow(0 0 10px color-mix(in srgb, var(--player-color) 34%, transparent))
+    drop-shadow(0 0 22px color-mix(in srgb, var(--player-color) 20%, transparent));
+}
+.prototype-player-grid.highlight-b .preset-highlighted .lobby-meeple {
+  filter: none;
+}
+.prototype-player-grid.highlight-b .preset-highlighted .lobby-meeple::before {
+  inset: -18px;
+  opacity: 1;
+  background: radial-gradient(circle, color-mix(in srgb, var(--player-color) 30%, transparent) 0 18%, transparent 70%);
+}
+.prototype-player-grid.highlight-c .preset-highlighted .lobby-meeple::before {
+  inset: -24px;
+  opacity: 1;
+  background:
+    radial-gradient(circle, transparent 0 20%, color-mix(in srgb, var(--player-color) 24%, transparent) 34%, transparent 58%),
+    radial-gradient(circle, color-mix(in srgb, var(--player-color) 14%, transparent) 0 28%, transparent 78%);
+}
 .prototype-controls { flex-shrink: 0; }
 .prototype-controls.variant-a { display: flex; align-items: center; gap: .35rem; padding: .35rem 0 .45rem; overflow-x: auto; }
 .prototype-controls-label { color: var(--text-dim); font-size: .65rem; white-space: nowrap; }
