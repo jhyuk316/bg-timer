@@ -129,6 +129,14 @@ export function renderGameScreen(container, gameState, settings, options = {}) {
     penaltyEl.id = `player-penalty-${i}`;
     area.appendChild(penaltyEl);
 
+    const turnStatsEl = el(
+      'div',
+      'game-turn-stats',
+      `${gameState.playerStates[i].turnCount}턴 · 평균 ${formatTime(gameState.playerStates[i].averageTurnTime)}`,
+    );
+    turnStatsEl.id = `player-turn-stats-${i}`;
+    area.appendChild(turnStatsEl);
+
     grid.appendChild(area);
   }
   container.appendChild(grid);
@@ -194,6 +202,11 @@ export function updateGameUI(gameState) {
       penaltyEl.textContent = timerMode !== 'simple' && p.penaltyCount > 0
         ? `패널티 ×${p.penaltyCount} (−${p.penaltyCount * 2}%)`
         : '';
+    }
+
+    const turnStatsEl = document.getElementById(`player-turn-stats-${i}`);
+    if (turnStatsEl) {
+      turnStatsEl.textContent = `${p.turnCount}턴 · 평균 ${formatTime(p.averageTurnTime)}`;
     }
   }
 

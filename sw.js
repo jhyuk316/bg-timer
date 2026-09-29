@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bg-timer-v18';
+const CACHE_NAME = 'bg-timer-v19';
 const ASSETS = [
   './',
   './index.html',
