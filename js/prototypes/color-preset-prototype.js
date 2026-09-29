@@ -2,9 +2,9 @@ import { COLOR_PALETTE, COLOR_PRESETS } from '../settings.js';
 
 // Throwaway UI prototype: three lobby button structures, switchable via ?variant=A|B|C.
 const VARIANTS = {
-  A: '바로 보이는 칩',
-  B: '한 버튼 + 펼침 패널',
-  C: '하단 순환 버튼',
+  A: '미플 살짝 확대',
+  B: '미플 오라',
+  C: '추천 글자',
 };
 
 const presetNames = Object.keys(COLOR_PRESETS);
@@ -99,12 +99,10 @@ function buildLobby(variant) {
   const main = el('section', 'lobby-main');
   const titleRow = el('div', 'lobby-title-row prototype-title-row');
   titleRow.appendChild(el('h1', 'lobby-title', '플레이어 2/6'));
-  titleRow.appendChild(el('span', 'prototype-notice', activePreset ? `${activePreset} 색상만 강조 중 · 선택 인원은 그대로` : '색상 강조 꺼짐'));
-  if (variant === 'B') titleRow.appendChild(buildPresetControls(variant));
+  titleRow.appendChild(buildPresetControls('B'));
   main.appendChild(titleRow);
-  if (variant === 'A') main.appendChild(buildPresetControls(variant));
 
-  const grid = el('div', 'lobby-player-grid prototype-player-grid');
+  const grid = el('div', `lobby-player-grid prototype-player-grid highlight-${variant.toLowerCase()}`);
   const highlightIndices = activePreset ? COLOR_PRESETS[activePreset].paletteMap : [];
   COLOR_PALETTE.forEach((color, index) => {
     const selected = index === 0 || index === 6;
@@ -115,7 +113,9 @@ function buildLobby(variant) {
     select.type = 'button';
     const meeple = el('span', 'lobby-meeple');
     meeple.innerHTML = '<svg viewBox="0 0 512 512"><path fill="currentColor" d="M256 55c-40 0-70 34-72 83-63 31-145 64-145 102 0 22 45 36 90 41-35 60-90 111-90 151 0 21 4 25 25 25h112c16 0 18-8 33-37 17-34 37-59 47-59s30 25 47 59c15 29 17 37 33 37h112c21 0 25-4 25-25 0-40-55-91-90-151 45-5 90-19 90-41 0-38-82-71-145-102-2-49-32-83-72-83z"/></svg>';
-    select.append(meeple, el('span', 'lobby-owner', selected ? '나' : '선택 가능'));
+    let ownerText = selected ? '나' : '선택 가능';
+    if (variant === 'C' && highlighted) ownerText += ' · 추천';
+    select.append(meeple, el('span', `lobby-owner${variant === 'C' && highlighted ? ' preset-recommendation' : ''}`, ownerText));
     tile.append(select, Object.assign(el('input', 'lobby-player-name'), { value: color.name, disabled: !selected }));
     grid.appendChild(tile);
   });
@@ -123,7 +123,6 @@ function buildLobby(variant) {
 
   const footer = el('div', 'lobby-footer prototype-footer');
   footer.appendChild(el('div', 'lobby-config', '타이머 방식 · 플레이 시간 누적'));
-  if (variant === 'C') footer.appendChild(buildPresetControls(variant));
   footer.append(el('button', 'btn-secondary', '준비 완료'), Object.assign(el('button', 'btn-primary', '게임 시작'), { disabled: true }));
   main.appendChild(footer);
   wrap.append(side, main);
