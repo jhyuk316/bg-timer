@@ -26,6 +26,7 @@ import {
   startMultiplayerGame,
 } from './multiplayer/game-service.js';
 import { bindSeatDrag } from './multiplayer/seat-drag.js';
+import { seatOffsetForScreen } from './multiplayer/seat-motion.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
 import { isParticipantPresent } from './multiplayer/room-state.js';
 import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
@@ -297,6 +298,8 @@ function renderMultiplayerTick() {
 
 function showMultiplayerGame() {
   if (!multiplayerSession || !multiplayerRoom?.game) return;
+  const previousSeats = new Map([...appEl.querySelectorAll('.multiplayer-seats .player-area[data-player-id]')]
+    .map((area) => [area.dataset.playerId, area.getBoundingClientRect()]));
   currentScreen = 'game';
   if (multiplayerFrame) cancelAnimationFrame(multiplayerFrame);
 
@@ -319,10 +322,25 @@ function showMultiplayerGame() {
   updateGameUI(toMultiplayerUiState(view));
 
   appEl.querySelectorAll('.player-area').forEach((area, index) => {
+    area.dataset.playerId = view.players[index].id;
     area.addEventListener('click', () => runMultiplayerGameAction(
       () => selectMultiplayerPlayer(multiplayerSession.roomId, view.players[index].id),
     ));
   });
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const rotated = window.matchMedia('(orientation: portrait)').matches;
+    appEl.querySelectorAll('.multiplayer-seats .player-area').forEach((area) => {
+      const before = previousSeats.get(area.dataset.playerId);
+      if (!before) return;
+      const after = area.getBoundingClientRect();
+      const [dx, dy] = seatOffsetForScreen(before, after, rotated);
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      area.animate([
+        { transform: `translate3d(${dx}px, ${dy}px, 0)`, zIndex: 2 },
+        { transform: 'translate3d(0, 0, 0)', zIndex: 2 },
+      ], { duration: 260, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+    });
+  }
   bindSeatDrag(document.getElementById('player-grid'), (sourceIndex, targetIndex) => (
     runMultiplayerGameAction(() => swapMultiplayerPlayerOrder(
       multiplayerSession.roomId,
