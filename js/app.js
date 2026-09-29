@@ -30,6 +30,7 @@ import { seatOffsetForScreen } from './multiplayer/seat-motion.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
 import { isParticipantPresent } from './multiplayer/room-state.js';
 import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
+import { renderColorPresetPrototype } from './prototypes/color-preset-prototype.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -548,6 +549,12 @@ function toggleFullscreen() {
 // --- Init ---
 
 function init() {
+  const prototypeName = new URLSearchParams(location.search).get('prototype');
+  if (prototypeName === 'color-presets') {
+    renderColorPresetPrototype(appEl);
+    return;
+  }
+
   initSound();
   setSoundEnabled(settings.soundEnabled);
 
