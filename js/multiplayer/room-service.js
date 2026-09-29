@@ -272,6 +272,16 @@ export async function updateRoomConfig(roomId, config) {
   await services.databaseSdk.update(roomRef, updates);
 }
 
+export async function updateRoomColorPreset(roomId, presetName) {
+  const services = await getFirebaseServices();
+  const roomRef = services.databaseSdk.ref(services.database, `rooms/${roomId}`);
+  const snapshot = await services.databaseSdk.get(roomRef);
+  const room = snapshot.val();
+  if (!room || room.hostUid !== getClientUid()) throw new Error('방장만 색상 프리셋을 바꿀 수 있습니다.');
+
+  await services.databaseSdk.update(roomRef, { colorPreset: presetName || null });
+}
+
 export async function restoreRoom() {
   const session = loadRoomSession();
   if (!session?.roomId || !session?.code) return null;

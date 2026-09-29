@@ -15,6 +15,9 @@
 | 게스트는 다른 참가자의 정보를 수정할 수 없음 | 게스트 UID | `/rooms/room_test/participants/other` | 저장 | 거부 |
 | 게스트는 게임 설정을 바꿀 수 없음 | 게스트 UID | `/rooms/room_test/config` | 수정 | 거부 |
 | 방장은 유효한 게임 설정을 바꿀 수 있음 | 방장 UID | `/rooms/room_test/config` | 수정 | 허용 |
+| 게스트는 색상 프리셋을 바꿀 수 없음 | 게스트 UID | `/rooms/room_test/colorPreset` | 수정 | 거부 |
+| 방장은 알려진 색상 프리셋을 바꿀 수 있음 | 방장 UID | `/rooms/room_test/colorPreset` | 수정 | 허용 |
+| 알 수 없는 색상 프리셋은 저장할 수 없음 | 방장 UID | `/rooms/room_test/colorPreset` | 수정 | 거부 |
 | 게스트는 비어 있는 말을 선택할 수 있음 | 게스트 UID | `/rooms/room_test/players/p1` | 소유자를 자신으로 수정 | 허용 |
 | 게스트는 다른 게스트가 선택한 말을 빼앗을 수 없음 | 게스트 UID | `/rooms/room_test/players/p2` | 소유자 수정 | 거부 |
 | 참가한 게스트는 어느 말로든 턴을 바꿀 수 있음 | 게스트 UID | `/rooms/room_test/game` | 리비전 1 증가와 함께 저장 | 허용 |

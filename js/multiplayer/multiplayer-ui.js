@@ -1,4 +1,4 @@
-import { COLOR_PALETTE } from '../settings.js';
+import { COLOR_PALETTE, COLOR_PRESETS } from '../settings.js';
 import { formatRoomCode } from './room-code.js';
 import { canStartGame, getSelectedPlayers, isParticipantPresent } from './room-state.js';
 import { renderQrCode } from './qr-code.js';
@@ -103,15 +103,35 @@ export function renderLobbyScreen(container, room, context, callbacks) {
   const titleRow = el('div', 'lobby-title-row');
   titleRow.appendChild(el('h1', 'lobby-title', `플레이어 ${getSelectedPlayers(room).length}/6`));
   if (context.error) titleRow.appendChild(el('span', 'multi-error inline', context.error));
+  const presetDetails = el('details', 'lobby-preset-details');
+  const presetSummary = el('summary', 'lobby-preset-summary');
+  presetSummary.appendChild(el('span', '', '색상 프리셋'));
+  if (room.colorPreset) presetSummary.appendChild(el('strong', '', room.colorPreset));
+  presetDetails.appendChild(presetSummary);
+  const presetPanel = el('div', 'lobby-preset-panel');
+  for (const name of Object.keys(COLOR_PRESETS)) {
+    const button = el('button', `lobby-preset-option${room.colorPreset === name ? ' active' : ''}`, name);
+    button.type = 'button';
+    button.disabled = !context.isHost;
+    button.setAttribute('aria-pressed', String(room.colorPreset === name));
+    button.addEventListener('click', () => callbacks.selectColorPreset(room.colorPreset === name ? null : name));
+    presetPanel.appendChild(button);
+  }
+  presetDetails.appendChild(presetPanel);
+  titleRow.appendChild(presetDetails);
   right.appendChild(titleRow);
 
   const playerGrid = el('div', 'lobby-player-grid');
+  const presetPaletteIndices = room.colorPreset
+    ? new Set(COLOR_PRESETS[room.colorPreset]?.paletteMap || [])
+    : new Set();
   for (const [playerId, player] of Object.entries(room.players || {})) {
     const isMine = player.ownerUid === context.uid;
     const isSelected = Boolean(player.ownerUid);
     const ownerConnected = !player.ownerUid
       || isParticipantPresent(room.participants?.[player.ownerUid], context.now);
-    const tile = el('div', `lobby-player${isSelected ? ' selected' : ''}${isMine ? ' mine' : ''}${ownerConnected ? '' : ' disconnected'}`);
+    const isPresetColor = presetPaletteIndices.has(player.paletteIndex);
+    const tile = el('div', `lobby-player${isSelected ? ' selected' : ''}${isMine ? ' mine' : ''}${isPresetColor ? ' preset-highlighted' : ''}${ownerConnected ? '' : ' disconnected'}`);
     tile.style.setProperty('--player-color', player.color || COLOR_PALETTE[player.paletteIndex]?.hex);
 
     const selectButton = el('button', 'lobby-player-select');

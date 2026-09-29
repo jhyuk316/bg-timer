@@ -105,6 +105,9 @@ try {
   await check('outsider cannot read room', false, roomPath, 'GET', outsider);
   await check('guest cannot change config', false, `${roomPath}/config`, 'PATCH', guest, { mainTimeMs: 120000 });
   await check('host changes config', true, `${roomPath}/config`, 'PATCH', host, { mainTimeMs: 1800000 });
+  await check('guest cannot change color preset', false, `${roomPath}/colorPreset`, 'PUT', guest, '백로성');
+  await check('host changes color preset', true, `${roomPath}/colorPreset`, 'PUT', host, '백로성');
+  await check('unknown color preset is rejected', false, `${roomPath}/colorPreset`, 'PUT', host, 'unknown');
   await check('host claims player', true, `${roomPath}/players/p0`, 'PATCH', host, { ownerUid: host.uid });
   await check('guest claims empty player', true, `${roomPath}/players/p1`, 'PATCH', guest, { ownerUid: guest.uid });
   await check('second guest joins', true, `${roomPath}/participants/${otherGuest.uid}`, 'PUT', otherGuest, participant('guest'));
