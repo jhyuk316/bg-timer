@@ -9,8 +9,16 @@
 .prototype-title-row .prototype-controls { margin-left: auto; }
 .prototype-player-grid { position: relative; }
 .prototype-player-grid .lobby-player { position: relative; transition: opacity .2s, box-shadow .2s, background .2s, transform .2s; }
-.prototype-player-grid .lobby-player.selected {
+.prototype-player-grid.highlight-a .lobby-player.selected {
+  border: 2px solid var(--player-color);
+  background: var(--surface);
+}
+.prototype-player-grid.highlight-b .lobby-player.selected {
   border-color: transparent;
+  background: color-mix(in srgb, var(--player-color) 24%, var(--surface));
+}
+.prototype-player-grid.highlight-c .lobby-player.selected {
+  border: 2px solid var(--player-color);
   background: color-mix(in srgb, var(--player-color) 24%, var(--surface));
 }
 .prototype-player-grid .lobby-player.mine { box-shadow: none; }
@@ -20,20 +28,7 @@
   content: ''; position: absolute; z-index: 0; pointer-events: none; border-radius: 50%; opacity: 0;
   transition: opacity .2s;
 }
-.prototype-player-grid.highlight-a .preset-highlighted .lobby-meeple {
-  filter:
-    drop-shadow(0 0 10px color-mix(in srgb, var(--player-color) 34%, transparent))
-    drop-shadow(0 0 22px color-mix(in srgb, var(--player-color) 20%, transparent));
-}
-.prototype-player-grid.highlight-b .preset-highlighted .lobby-meeple {
-  filter: none;
-}
-.prototype-player-grid.highlight-b .preset-highlighted .lobby-meeple::before {
-  inset: -18px;
-  opacity: 1;
-  background: radial-gradient(circle, color-mix(in srgb, var(--player-color) 30%, transparent) 0 18%, transparent 70%);
-}
-.prototype-player-grid.highlight-c .preset-highlighted .lobby-meeple::before {
+.prototype-player-grid .preset-highlighted .lobby-meeple::before {
   inset: -24px;
   opacity: 1;
   background:

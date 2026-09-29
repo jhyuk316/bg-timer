@@ -2,9 +2,9 @@ import { COLOR_PALETTE, COLOR_PRESETS } from '../settings.js';
 
 // Throwaway UI prototype: three lobby button structures, switchable via ?variant=A|B|C.
 const VARIANTS = {
-  A: '넓은 확산광',
-  B: '부드러운 원형 오라',
-  C: '이중 오라',
+  A: '선택 · 테두리',
+  B: '선택 · 배경',
+  C: '선택 · 테두리 + 배경',
 };
 
 const presetNames = Object.keys(COLOR_PRESETS);
