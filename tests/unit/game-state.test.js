@@ -45,8 +45,27 @@ test('supports direct switches and active-player tap to operational time', () =>
 
   assert.equal(view.players[0].totalTimeUsed, 3_000);
   assert.equal(view.players[1].totalTimeUsed, 5_000);
+  assert.equal(view.players[0].turnCount, 1);
+  assert.equal(view.players[0].averageTurnTime, 3_000);
+  assert.equal(view.players[1].turnCount, 1);
+  assert.equal(view.players[1].averageTurnTime, 5_000);
   assert.equal(view.referee.totalTime, 3_000);
   assert.equal(view.activeType, 'referee');
+});
+
+test('averages completed and active time across a player turns', () => {
+  let game = createInitialGame(0, 'host');
+  game = createTurnEvent(game, 'p0', 'guest', 1_000);
+  game = createOperationalEvent(game, 'host', 4_000);
+  game = createTurnEvent(game, 'p0', 'guest', 6_000);
+
+  const view = deriveGameView(roomWithGame(game), 11_000);
+
+  assert.equal(view.players[0].turnCount, 2);
+  assert.equal(view.players[0].totalTimeUsed, 8_000);
+  assert.equal(view.players[0].averageTurnTime, 4_000);
+  assert.equal(view.players[1].turnCount, 0);
+  assert.equal(view.players[1].averageTurnTime, 0);
 });
 
 test('derives turn delay, main time, penalties, and six selected players', () => {

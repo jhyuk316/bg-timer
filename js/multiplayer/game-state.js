@@ -165,7 +165,10 @@ export function deriveGameView(room, serverNow) {
     revision: game.revision,
     startedAt: game.startedAt,
     endedAt: game.endedAt,
-    players,
+    players: players.map((player) => ({
+      ...player,
+      averageTurnTime: player.turnCount > 0 ? player.totalTimeUsed / player.turnCount : 0,
+    })),
     referee,
     turnLog,
     totalActiveTime: Math.max(0, effectiveNow - game.startedAt),

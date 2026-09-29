@@ -548,6 +548,18 @@ button:disabled { opacity: 0.4; cursor: default; }
   min-height: 1em;
 }
 
+.game-turn-stats {
+  margin-top: 0.15rem;
+  font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.player-area.active .game-turn-stats {
+  color: var(--text);
+}
+
 .game-player-owner {
   font-size: 11px;
   opacity: 0.72;
