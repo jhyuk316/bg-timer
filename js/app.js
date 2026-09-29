@@ -1,4 +1,4 @@
-import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, COLOR_PALETTE } from './settings.js';
+import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, COLOR_PALETTE, COLOR_PRESETS } from './settings.js';
 import { initSound, setSoundEnabled } from './sound.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, renderGlobalBar, updateGlobalBar } from './ui.js';
@@ -16,6 +16,7 @@ import {
   setReady as setMultiplayerReady,
   subscribeRoom,
   updateRoomConfig,
+  updateRoomColorPreset,
   updatePlayerName,
 } from './multiplayer/room-service.js';
 import {
@@ -30,7 +31,6 @@ import { seatOffsetForScreen } from './multiplayer/seat-motion.js';
 import { buildMultiplayerStats, deriveGameView } from './multiplayer/game-state.js';
 import { isParticipantPresent } from './multiplayer/room-state.js';
 import { getServerNow, subscribeConnection } from './multiplayer/firebase-client.js';
-import { renderColorPresetPrototype } from './prototypes/color-preset-prototype.js';
 
 const appEl = document.getElementById('app');
 let settings = loadSettings();
@@ -195,6 +195,7 @@ function enterLobby(session) {
       const renderKey = JSON.stringify({
         players: room.players,
         config: room.config,
+        colorPreset: room.colorPreset || null,
         participants: Object.entries(room.participants || {}).map(([uid, participant]) => [
           uid,
           participant.role,
@@ -237,6 +238,10 @@ function showLobby() {
     },
     async renamePlayer(playerId, name) {
       await runLobbyAction(() => updatePlayerName(multiplayerSession.roomId, playerId, name));
+    },
+    async selectColorPreset(name) {
+      const nextName = name && COLOR_PRESETS[name] ? name : null;
+      await runLobbyAction(() => updateRoomColorPreset(multiplayerSession.roomId, nextName));
     },
     async setReady(ready) {
       await runLobbyAction(() => setMultiplayerReady(multiplayerSession.roomId, ready));
@@ -549,12 +554,6 @@ function toggleFullscreen() {
 // --- Init ---
 
 function init() {
-  const prototypeName = new URLSearchParams(location.search).get('prototype');
-  if (prototypeName === 'color-presets') {
-    renderColorPresetPrototype(appEl);
-    return;
-  }
-
   initSound();
   setSoundEnabled(settings.soundEnabled);
 
