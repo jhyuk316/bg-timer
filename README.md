@@ -59,6 +59,7 @@ bg-timer/
 │   ├── sound.js        # 알림 사운드 (Web Audio API)
 │   ├── history.js      # 히스토리 저장/조회
 │   └── multiplayer/    # 방, Firebase, 게임 이벤트 동기화
+├── firebase.json       # Firebase 배포 설정
 ├── database.rules.json # Realtime Database 보안 규칙
 ├── vendor/qrcode.js
 ├── manifest.json
