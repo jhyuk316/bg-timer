@@ -29,7 +29,7 @@ status: open
 
 ## Follow-up TODO
 
-- 기존 localStorage 게임 기록을 Firebase `gameRecords`로 이전하고 기록 화면도 Firebase 조회 방식으로 전환한다. 이번 결정 단계에서는 구현하지 않는다.
+- 기존 localStorage 게임 기록의 Firebase 이전과 기록 화면의 Firebase 조회 전환을 구현했다. 상세 내용은 [기록 이전 작업](tickets/005-migrate-history-to-firebase.md)을 참고한다.
 
 ## Out of scope
 

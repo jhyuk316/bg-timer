@@ -37,6 +37,7 @@ let settings = loadSettings();
 let currentScreen = 'settings';
 let lastStats = null;
 let lastSavedGame = null;
+let pendingHistorySave = null;
 let multiplayerSession = null;
 let multiplayerRoom = null;
 let multiplayerError = '';
@@ -444,13 +445,17 @@ function finishMultiplayerGame() {
     },
   };
 
-  const markerKey = `bg-timer-saved-room:${multiplayerSession.roomId}`;
-  const savedId = localStorage.getItem(markerKey);
-  lastSavedGame = savedId ? getHistoryGame(savedId) : null;
-  if (multiplayerRoom.hostUid === multiplayerSession.uid && !lastSavedGame) {
-    lastSavedGame = saveHistory(buildHistoryData(lastStats));
-    localStorage.setItem(markerKey, lastSavedGame.id);
-  }
+  lastSavedGame = null;
+  pendingHistorySave = null;
+  const roomId = multiplayerSession.roomId;
+  const historyData = buildHistoryData(lastStats);
+  const legacySavedId = localStorage.getItem(`bg-timer-saved-room:${roomId}`);
+  pendingHistorySave = getHistoryGame(roomId).then(async (existing) => {
+    if (!existing && legacySavedId) existing = await getHistoryGame(legacySavedId);
+    lastSavedGame = existing || await saveHistory(historyData, roomId);
+  }).catch((error) => {
+    console.error('게임 기록을 저장하지 못했습니다.', error);
+  });
   showScreen('stats');
 }
 
@@ -482,21 +487,26 @@ function buildHistoryData(stats, gameName) {
 
 // --- Stats ---
 
-function showStats() {
+async function showStats() {
   if (!lastStats) return showSettings();
-  const names = getGameNames();
-  const canSave = multiplayerRoom?.hostUid === multiplayerSession?.uid;
+  let names = [];
+  try { names = await getGameNames(); } catch (error) { console.error('기록 이름을 불러오지 못했습니다.', error); }
+  if (currentScreen !== 'stats') return;
+  const canSave = Boolean(multiplayerSession?.uid);
   renderStatsScreen(appEl, lastStats, names, {
     canSave,
     gameName: lastSavedGame?.gameName,
-    save(gameName) {
-      if (lastSavedGame) {
-        const updated = updateGameName(lastSavedGame.id, gameName);
-        if (updated) lastSavedGame = updated;
-      } else {
-        lastSavedGame = saveHistory(buildHistoryData(lastStats, gameName));
-      }
-      showScreen('settings');
+    async save(gameName) {
+      try {
+        await pendingHistorySave;
+        if (lastSavedGame) {
+          const updated = await updateGameName(lastSavedGame.id, gameName);
+          if (updated) lastSavedGame = updated;
+        } else {
+          lastSavedGame = await saveHistory(buildHistoryData(lastStats, gameName), multiplayerSession?.roomId);
+        }
+        showScreen('settings');
+      } catch (error) { alert(`기록을 저장하지 못했습니다: ${error.message}`); }
     },
     newGame() {
       showScreen('settings');
@@ -507,19 +517,26 @@ function showStats() {
 
 // --- History ---
 
-function showHistory() {
-  const list = getHistory();
+async function showHistory() {
+  let list;
+  try {
+    await pendingHistorySave;
+    list = await getHistory();
+  } catch (error) { alert(`기록을 불러오지 못했습니다: ${error.message}`); return showScreen('settings'); }
+  if (currentScreen !== 'history') return;
   renderHistoryScreen(appEl, list, {
     back() {
       showScreen('settings');
     },
-    view(id) {
-      const g = getHistoryGame(id);
-      if (g) showHistoryDetail(g);
+    async view(id) {
+      try {
+        const g = await getHistoryGame(id);
+        if (g) showHistoryDetail(g);
+      } catch (error) { alert(`기록을 불러오지 못했습니다: ${error.message}`); }
     },
-    delete(id) {
-      deleteGame(id);
-      showHistory();
+    async delete(id) {
+      try { await deleteGame(id); showHistory(); }
+      catch (error) { alert(`기록을 삭제하지 못했습니다: ${error.message}`); }
     },
   });
   restoreGlobalBar();
