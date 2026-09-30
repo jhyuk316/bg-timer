@@ -20,8 +20,8 @@
 - Vanilla JS (ES6 Modules), CSS, HTML
 - Firebase Realtime Database + Anonymous Authentication (멀티플레이)
 - 빌드 불필요, QR 생성 라이브러리는 저장소에 포함
-- localStorage로 설정/히스토리 저장
-- 멀티플레이 기록은 MVP에서 방장 기기에만 로컬 저장하며, Firebase 기록 이관은 후속 작업
+- localStorage로 설정 저장
+- Firebase Realtime Database에 기기 참가자별 게임 기록 저장 및 조회
 - Service Worker로 오프라인 캐싱
 
 ## 실행
@@ -37,7 +37,7 @@ npx live-server --port=8080
 
 ## 배포
 
-GitHub Pages에 push하면 자동 배포.
+main 브랜치에 push하면 GitHub Pages가 자동 배포한다. Realtime Database 보안 규칙은 `database.rules.json`을 별도로 Firebase 프로젝트에 배포해야 한다.
 
 ## 파일 구조
 

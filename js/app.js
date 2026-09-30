@@ -425,7 +425,9 @@ function finishMultiplayerGame() {
   pendingHistorySave = null;
   const roomId = multiplayerSession.roomId;
   const historyData = buildHistoryData(lastStats);
+  const legacySavedId = localStorage.getItem(`bg-timer-saved-room:${roomId}`);
   pendingHistorySave = getHistoryGame(roomId).then(async (existing) => {
+    if (!existing && legacySavedId) existing = await getHistoryGame(legacySavedId);
     lastSavedGame = existing || await saveHistory(historyData, roomId);
   }).catch((error) => {
     console.error('게임 기록을 저장하지 못했습니다.', error);
