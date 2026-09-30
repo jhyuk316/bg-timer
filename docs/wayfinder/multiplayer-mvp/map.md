@@ -1,39 +1,35 @@
 ---
-title: 멀티플레이 MVP 결정 지도
+title: 멀티플레이 결정 지도
 label: wayfinder:map
 status: open
 ---
 
-## Destination
+## 현재 방향
 
-기존 싱글 모드를 유지하면서, 여러 기기가 방에 모여 플레이어 말을 나누어 맡고 하나의 동기화된 타이머 게임을 끝낼 수 있는 MVP의 구현 가능한 화면·동작·Firebase 명세를 확정한다.
+모든 게임은 방에서 시작하고 1~6명의 플레이어 말을 지원한다. 여러 기기는 같은 보드와 타이머를 공유하며, 혼자서도 방을 만들어 시작할 수 있다. 기본 타이머는 플레이 시간 누적이다.
 
-## Notes
+- 현재 요구사항은 [PRD](../../../PRD.md), 용어는 [CONTEXT](../../../CONTEXT.md)를 따른다.
+- 전체 문서와 남은 작업은 [문서 목록](../../README.md)에서 확인한다.
+- Firebase Realtime Database와 익명 인증을 사용한다.
+- 모바일 가로 화면을 기본으로 하며 세로 화면에는 가로 레이아웃을 회전해 표시한다.
 
-- 계획 단계만 다룬다. 구현은 이 지도의 결정이 끝난 뒤 별도 작업으로 진행한다.
-- UI 결정은 모바일 가로 화면을 기본으로 하고 현재 싱글 게임 화면 재사용을 우선한다.
-- Firebase Realtime Database와 익명 인증을 사용하고 별도 백엔드는 두지 않는다.
-- 용어는 [CONTEXT.md](../../../CONTEXT.md)를 따른다.
+## 결정과 구현
 
-## Decisions so far
+- [MVP 경계](tickets/001-mvp-boundary.md): 최초 결정과 방 기반 통일 이후 변경
+- [방 생성·참가·대기실](tickets/002-room-and-lobby-flow.md): 1~6개 말 배정, 모든 접속 기기의 준비 후 시작
+- [게임 조작과 동기화](tickets/003-in-game-control.md): 모든 참가자의 말 조작, 운영시간 누적, 방장 전용 종료
+- [Firebase 준비](tickets/004-firebase-provisioning.md): 프로젝트 연결과 규칙 검증
+- [기록 이전](tickets/005-migrate-history-to-firebase.md): 참가자별 기록 저장·조회와 기존 로컬 기록 이전 완료
+- [기본 타이머 전환](../../todos/simple-timer-default.md): 완료
 
-- [멀티플레이 MVP의 경계와 기본 화면 원칙](tickets/001-mvp-boundary.md): 한 게임을 생성·참가·배정·동기화·종료하는 흐름만 포함하고, 전체 보드와 싱글/멀티 모드 전환을 사용한다.
-- [방 생성·참가·대기실 화면 흐름](tickets/002-room-and-lobby-flow.md): 방을 즉시 만들고 총 1~6개의 말을 나누어 맡은 뒤 모든 기기가 준비되면 시작한다.
-- [멀티 게임 조작과 동기화 체감](tickets/003-in-game-control.md): 모든 기기 참가자가 모든 말을 조작하고, 정지 상태 없이 플레이어 시간 또는 운영시간을 계속 기록한다.
+## 후속 TODO
 
-## Not yet specified
+- [플레이 기록 이미지 등록과 외부 저장소](../../todos/image-upload-storage.md): 이미지는 외부 저장소에 올리고 Firebase에는 경로나 URL만 저장한다. 구현 보류.
+- [실기기 QA](../../qa/multiplayer-mvp-acceptance-2026-09-24.md): 서로 다른 네트워크의 휴대폰 2대, QR 참가, 연결 복구, 백그라운드 복귀 확인.
 
-- 모바일 세로 방향으로 접속했을 때 회전 안내만 표시할지, 축약 화면도 지원할지
-- 방장 연결이 끊겼을 때의 안내와 종료 처리
-- 실제 기기 QA 범위와 MVP 출시 판정 기준
-
-## Follow-up TODO
-
-- 기존 localStorage 게임 기록의 Firebase 이전과 기록 화면의 Firebase 조회 전환을 구현했다. 상세 내용은 [기록 이전 작업](tickets/005-migrate-history-to-firebase.md)을 참고한다.
-
-## Out of scope
+## 현재 범위 밖
 
 - 관전자와 공개 방 목록
 - 방장 권한 이전
-- Google·이메일 등 사용자 계정 로그인
-- 종료된 방의 자동 정리 시스템
+- Google·이메일 등 계정 연동과 기기 간 기록 복구
+- 종료된 방의 자동 정리

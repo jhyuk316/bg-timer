@@ -2,7 +2,9 @@
 
 아래 항목은 Firebase Console > Realtime Database > Rules Playground에서 확인할 수 있다. 선택 실행 스크립트인 `live-rules.mjs`를 이용하면 익명 Firebase 사용자로 배포된 규칙을 직접 검사할 수도 있다.
 
-검사 상태(2026-09-27): 자리 이동 규칙을 사용자 승인 후 배포했다. `BG_TIMER_LIVE_RULES=1 node tests/rules/live-rules.mjs`로 `bg-timer-1b7ad`의 실제 규칙을 검사한 결과 35개 중 35개가 통과했으며, 아래 항목을 모두 포함한다. 이는 실제 규칙에 대한 검사 결과이며 Rules Playground에서 실행한 결과는 아니다. 스크립트는 익명 테스트 사용자와 임시 방을 만든 뒤 방 코드를 삭제하고 방 상태를 종료로 바꾼다.
+최근 검사 기록(2026-10-01): 기록 기능 작업에서 database.rules.json을 게시한 뒤 실제 DB 검사 41개 통과가 보고됐다. 참가자별 기록 저장·조회, 타인의 기록 접근 거부와 색상 프리셋을 포함한다. 이번 문서 점검에서는 실제 DB 검사를 재실행하지 않았다.
+
+이전 검사 기록(2026-09-27): 자리 이동 규칙을 사용자 승인 후 배포했다. `BG_TIMER_LIVE_RULES=1 node tests/rules/live-rules.mjs`로 `bg-timer-1b7ad`의 실제 규칙을 검사한 결과 35개 중 35개가 통과했으며, 아래 항목을 모두 포함한다. 이는 실제 규칙에 대한 검사 결과이며 Rules Playground에서 실행한 결과는 아니다. 스크립트는 익명 테스트 사용자와 임시 방을 만든 뒤 방 코드를 삭제하고 방 상태를 종료로 바꾼다.
 
 | 검사 항목 | 인증 주체 | 경로 | 작업 | 기대 결과 |
 |---|---|---|---|---|
@@ -36,3 +38,10 @@
 | 외부인은 자리 순서를 바꿀 수 없음 | 외부인 UID | `/rooms/room_test/playerOrder` | 저장 | 거부 |
 | 잘못된 자리 순서는 저장할 수 없음 | 게스트 UID | `/rooms/room_test/playerOrder` | 잘못된 형식 저장 | 거부 |
 | 종료된 게임의 자리 순서는 바꿀 수 없음 | 게스트 UID | `/rooms/room_test/playerOrder` | 저장 | 거부 |
+
+## 참가자별 기록 권한
+
+| 검사 항목 | 인증 주체 | 경로 | 작업 | 기대 결과 |
+|---|---|---|---|---|
+| 방장과 게스트는 자기 기록을 저장·조회할 수 있음 | 해당 UID | /gameRecords/{uid}/{roomId} | 저장·읽기 | 허용 |
+| 타인의 기록에 접근할 수 없음 | 다른 UID | /gameRecords/{uid} | 읽기·저장 | 거부 |

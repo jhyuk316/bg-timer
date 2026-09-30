@@ -1,5 +1,8 @@
 # Multiplayer MVP Implementation Plan
 
+> 보존 기록: 최초 MVP 설계·구현 계획이다. 후속 PR #3·#4·#5·#7·#8에서 타이머 기본값, 방 기반 흐름, 참가자별 Firebase 기록, 턴 통계와 색상 추천이 변경됐다. 현재 요구사항은 [PRD](../../../PRD.md), 남은 작업은 [문서 목록](../../README.md)을 따른다.
+
+
 > **Spec:** `docs/superpowers/specs/2026-09-21-multiplayer-mvp-design.md`
 >
 > **Execution:** Follow this plan task by task with test-driven development. Do not implement the Firebase history migration or the simple-timer follow-up while executing this plan.
