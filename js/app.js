@@ -515,13 +515,16 @@ async function showStats() {
         if (currentScreen !== 'stats') return;
         currentScreen = 'catalog';
         let recent = [];
-        try { recent = JSON.parse(localStorage.getItem('bg-timer-recent-games') || '[]'); } catch {}
+        try {
+          const saved = JSON.parse(localStorage.getItem('bg-timer-recent-games') || '[]');
+          if (Array.isArray(saved)) recent = saved.filter(g => typeof g?.nameKo === 'string').slice(0, 10).map(g => games.find(item => item.id === g.id) || g);
+        } catch {}
         renderCatalogSearch(appEl, games, recent, async selected => {
           if (currentScreen !== 'catalog') return;
           const buttons = [...appEl.querySelectorAll('button')]; buttons.forEach(b => { b.disabled = true; });
           try {
             await setPlayedGame(multiplayerSession.roomId, selected);
-            localStorage.setItem('bg-timer-recent-games', JSON.stringify([selected, ...recent.filter(g => g.nameKo !== selected.nameKo)].slice(0, 10)));
+            try { localStorage.setItem('bg-timer-recent-games', JSON.stringify([selected, ...recent.filter(g => g.nameKo !== selected.nameKo)].slice(0, 10))); } catch { /* 최근 목록 저장 실패는 게임 선택 성공을 취소하지 않음 */ }
             showScreen('stats');
           } catch (error) { alert(error.message); buttons.forEach(b => { b.disabled = false; }); }
         }, () => showScreen('stats'));

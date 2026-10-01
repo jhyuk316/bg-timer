@@ -15,3 +15,8 @@ test('정확 일치가 인기순보다 앞서고 결과 제한을 지킨다', ()
   const sample = [...games,{id:'3',rank:100,nameKo:'브라스',nameEn:'Brass'}];
   assert.equal(searchCatalog(sample,'브라스',1)[0].id,'3');
 });
+test('한글 조합 중 마지막 자음과 음절을 검색한다', () => {
+  for (const q of ['ㅂ','브','브ㄹ','브라ㅅ','브라스버ㅁ']) assert.equal(searchCatalog(games,q)[0].id,'1');
+  for (const q of ['세ㅌ','세티외ㄱ']) assert.equal(searchCatalog(games,q)[0].id,'2');
+  assert.deepEqual(searchCatalog(games,'브라ㅈ'),[]);
+});

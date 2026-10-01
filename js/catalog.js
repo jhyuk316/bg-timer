@@ -1,14 +1,33 @@
 export const normalizeTitle = (text) => String(text || '').normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
 const initial = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const vowels = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+const finals = ['ㄱ','ㄲ','ㄱㅅ','ㄴ','ㄴㅈ','ㄴㅎ','ㄷ','ㄹ','ㄹㄱ','ㄹㅁ','ㄹㅂ','ㄹㅅ','ㄹㅌ','ㄹㅍ','ㄹㅎ','ㅁ','ㅂ','ㅂㅅ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+export function titleJamo(text) {
+  return [...normalizeTitle(text).normalize('NFD')].map(c => {
+    const code = c.charCodeAt(0);
+    if (code >= 0x1100 && code <= 0x1112) return initial[code - 0x1100];
+    if (code >= 0x1161 && code <= 0x1175) return vowels[code - 0x1161];
+    if (code >= 0x11a8 && code <= 0x11c2) return finals[code - 0x11a8];
+    return c;
+  }).join('');
+}
 export function initials(text) {
   return [...text].map(c => { const n = c.charCodeAt(0) - 44032; return n >= 0 && n < 11172 ? initial[Math.floor(n / 588)] : c; }).join('');
+}
+const searchIndex = new WeakMap();
+function indexed(games) {
+  if (!searchIndex.has(games)) searchIndex.set(games, games.map(game => ({ game,
+    titles: [game.nameKo, game.nameEn].map(normalizeTitle),
+    initial: normalizeTitle(initials(game.nameKo)), jamo: titleJamo(game.nameKo),
+  })));
+  return searchIndex.get(games);
 }
 export function searchCatalog(games, query, limit = 30) {
   const q = normalizeTitle(query);
   if (!q) return [];
-  return games.map(game => {
-    const titles = [game.nameKo, game.nameEn].map(normalizeTitle);
-    const score = titles.some(t => t === q) ? 0 : titles.some(t => t.startsWith(q)) ? 1 : titles.some(t => t.includes(q)) ? 2 : normalizeTitle(initials(game.nameKo)).includes(q) ? 3 : 99;
+  const jamoQuery = titleJamo(query);
+  return indexed(games).map(({game, titles, initial, jamo}) => {
+    const score = titles.some(t => t === q) ? 0 : titles.some(t => t.startsWith(q)) ? 1 : titles.some(t => t.includes(q)) ? 2 : initial.includes(q) ? 3 : jamo.includes(jamoQuery) ? 4 : 99;
     return { game, score };
   }).filter(x => x.score < 99).sort((a, b) => a.score - b.score || a.game.rank - b.game.rank).slice(0, limit).map(x => x.game);
 }
@@ -41,7 +60,8 @@ export function renderCatalogSearch(container, games, recent, onSelect, onBack) 
     if (query) { const custom = document.createElement('button'); custom.className = 'catalog-result'; custom.textContent = `“${query}” 이름으로 기록`; custom.onclick = () => onSelect({ id: '', nameKo: query, nameEn: '', year: '' }); results.append(custom); }
     else if (!found.length) label.textContent = '최근 게임이 없습니다. 제목을 검색하세요.';
   }
-  input.addEventListener('input', () => { if (!input.composing) draw(); });
-  input.addEventListener('compositionstart', () => { input.composing = true; }); input.addEventListener('compositionend', () => { input.composing = false; draw(); });
+  input.addEventListener('input', draw);
+  input.addEventListener('compositionupdate', () => queueMicrotask(draw));
+  input.addEventListener('compositionend', draw);
   wrap.append(header, label, results); container.append(wrap); draw(); input.focus();
 }

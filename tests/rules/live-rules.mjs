@@ -165,6 +165,12 @@ try {
   });
   await check('host ends game', true, gamePath, 'PUT', host, hostEnd);
   await check('host closes room', true, `${roomPath}/status`, 'PUT', host, 'ended');
+  const playedGame = { id: '19110', nameKo: '세티', nameEn: 'SETI', year: '2024', updatedAt: Date.now() };
+  await check('host selects played game', true, `${roomPath}/playedGame`, 'PUT', host, playedGame);
+  await check('guest reads played game', true, `${roomPath}/playedGame`, 'GET', guest);
+  await check('guest cannot change played game', false, `${roomPath}/playedGame`, 'PUT', guest, playedGame);
+  await check('outsider cannot read played game', false, `${roomPath}/playedGame`, 'GET', outsider);
+  await check('empty played game title rejected', false, `${roomPath}/playedGame`, 'PUT', host, {...playedGame, nameKo: ''});
   await check('ended room cannot change player order', false, `${roomPath}/playerOrder`, 'PUT', guest, 'p0,p1,p2');
 
   const record = {
