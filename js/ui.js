@@ -229,7 +229,14 @@ export function renderStatsScreen(container, stats, savedNames, callbacks) {
 
   // Save row: [input] [저장 & 새 게임]
   const saveRow = el('div', 'stats-save-row');
-  if (callbacks.canSave === false) {
+  if (callbacks.catalogMode) {
+    const pick = el('button', 'btn-secondary', callbacks.playedGame?.nameKo || (callbacks.canSelectGame ? '＋ 플레이한 게임 선택' : '게임 선택은 방장이 합니다'));
+    pick.disabled = !callbacks.canSelectGame;
+    pick.addEventListener('click', callbacks.selectGame);
+    const next = el('button', 'btn-primary', '새 게임');
+    next.addEventListener('click', callbacks.newGame);
+    saveRow.append(pick, next);
+  } else if (callbacks.canSave === false) {
     const newGameBtn = el('button', 'btn-primary', '새 게임');
     newGameBtn.addEventListener('click', callbacks.newGame);
     saveRow.appendChild(newGameBtn);
