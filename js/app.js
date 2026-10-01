@@ -1,5 +1,7 @@
 import { buildCountModeMultiplayerConfig, buildDefaultMultiplayerConfig, loadSettings, saveSettings, COLOR_PALETTE, COLOR_PRESETS } from './settings.js';
 import { initSound, setSoundEnabled } from './sound.js';
+import { loadCatalog, renderCatalogSearch } from './catalog.js';
+import { setPlayedGame, readPlayedGame } from './multiplayer/catalog-service.js';
 import { saveGame as saveHistory, updateGameName, getHistory, getGame as getHistoryGame, deleteGame, getGameNames } from './history.js';
 import { renderGameScreen, updateGameUI, renderStatsScreen, renderHistoryScreen, renderHistoryDetail, renderGlobalBar, updateGlobalBar } from './ui.js';
 import { renderLobbyScreen, renderMultiplayerEntryScreen } from './multiplayer/multiplayer-ui.js';
@@ -457,6 +459,12 @@ function finishMultiplayerGame() {
     console.error('게임 기록을 저장하지 못했습니다.', error);
   });
   showScreen('stats');
+  unsubscribeRoom = subscribeRoom(roomId, room => {
+    if (!room) return;
+    const changed = JSON.stringify(multiplayerRoom?.playedGame) !== JSON.stringify(room.playedGame);
+    multiplayerRoom = room;
+    if (changed && currentScreen === 'stats') showStats();
+  });
 }
 
 async function runLobbyAction(action) {
@@ -492,9 +500,33 @@ async function showStats() {
   let names = [];
   try { names = await getGameNames(); } catch (error) { console.error('기록 이름을 불러오지 못했습니다.', error); }
   if (currentScreen !== 'stats') return;
+  let playedGame;
+  try { playedGame = await readPlayedGame(multiplayerSession.roomId); } catch {}
+  if (currentScreen !== 'stats') return;
   const canSave = Boolean(multiplayerSession?.uid);
   renderStatsScreen(appEl, lastStats, names, {
     canSave,
+    catalogMode: true,
+    canSelectGame: multiplayerRoom?.hostUid === multiplayerSession?.uid,
+    playedGame,
+    selectGame: async () => {
+      try {
+        const games = await loadCatalog();
+        if (currentScreen !== 'stats') return;
+        currentScreen = 'catalog';
+        let recent = [];
+        try { recent = JSON.parse(localStorage.getItem('bg-timer-recent-games') || '[]'); } catch {}
+        renderCatalogSearch(appEl, games, recent, async selected => {
+          if (currentScreen !== 'catalog') return;
+          const buttons = [...appEl.querySelectorAll('button')]; buttons.forEach(b => { b.disabled = true; });
+          try {
+            await setPlayedGame(multiplayerSession.roomId, selected);
+            localStorage.setItem('bg-timer-recent-games', JSON.stringify([selected, ...recent.filter(g => g.nameKo !== selected.nameKo)].slice(0, 10)));
+            showScreen('stats');
+          } catch (error) { alert(error.message); buttons.forEach(b => { b.disabled = false; }); }
+        }, () => showScreen('stats'));
+      } catch (error) { alert(error.message); }
+    },
     gameName: lastSavedGame?.gameName,
     async save(gameName) {
       try {

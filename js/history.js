@@ -1,4 +1,20 @@
 import { getClientUid, getFirebaseServices } from './multiplayer/firebase-client.js';
+import { readPlayedGame } from './multiplayer/catalog-service.js';
+
+async function withPlayedGame(record) {
+  if (!record) return record;
+  try {
+    const selected = await readPlayedGame(record.id);
+    if (selected) {
+      if (record.playedGame?.updatedAt !== selected.updatedAt) {
+        const { sdk, ref } = await recordsRef(record.id);
+        await sdk.update(ref, { gameName: selected.nameKo, playedGame: selected });
+      }
+      return { ...record, gameName: selected.nameKo, playedGame: selected };
+    }
+  } catch { /* 오래된 개인 기록 또는 더 이상 접근할 수 없는 방은 기존 제목 유지 */ }
+  return record;
+}
 
 const HISTORY_KEY = 'bg-timer-history';
 
@@ -61,13 +77,13 @@ export async function getHistory() {
   await migrateLocalHistory();
   const { sdk, ref } = await recordsRef();
   const snapshot = await sdk.get(ref);
-  return Object.values(snapshot.val() || {}).sort((a, b) => b.date.localeCompare(a.date));
+  return Promise.all(Object.values(snapshot.val() || {}).sort((a, b) => b.date.localeCompare(a.date)).map(withPlayedGame));
 }
 
 export async function getGame(id) {
   await migrateLocalHistory();
   const { sdk, ref } = await recordsRef(id);
-  return (await sdk.get(ref)).val();
+  return withPlayedGame((await sdk.get(ref)).val());
 }
 
 export async function deleteGame(id) {

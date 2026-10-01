@@ -12,6 +12,8 @@
 
 ## 남은 작업
 
+- [종료 후 게임 선택](todos/game-catalog-selection.md): codex/game-catalog-selection에서 구현·검증 중.
+
 | 작업 | 상태 | 상세 |
 |---|---|---|
 | 플레이 기록에 이미지 등록 | 보류 | [이미지 업로드와 외부 저장소](todos/image-upload-storage.md) |

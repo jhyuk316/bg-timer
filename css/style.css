@@ -1206,3 +1206,15 @@ button:disabled { opacity: 0.4; cursor: default; }
     padding: 0.25rem 0.75rem;
   }
 }
+/* 종료 후 게임 연결: 가로 전체 화면 검색 */
+.catalog-screen { width:100%; height:100%; display:flex; flex-direction:column; padding:12px 20px; overflow:hidden; }
+.catalog-header { display:flex; gap:12px; flex-shrink:0; align-items:center; }
+.catalog-header button { min-height:44px; padding:8px 12px; background:#303030; color:#eee; border:1px solid #555; border-radius:8px; white-space:nowrap; }
+.catalog-header input { flex:1; min-width:0; min-height:44px; font-size:16px; padding:10px 14px; background:#262626; color:#eee; border:1px solid #666; border-radius:10px; }
+.catalog-screen>p { font-size:12px; color:#aaa; margin:8px 0; }
+.catalog-results { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; }
+.catalog-result { display:flex; align-items:center; gap:12px; text-align:left; flex-shrink:0; min-height:62px; background:none; color:#eee; border:0; border-bottom:1px solid #3b3b3b; padding:8px; cursor:pointer; }
+.catalog-result img { width:42px; height:48px; object-fit:contain; }
+.catalog-result strong,.catalog-result small { display:block; }
+.catalog-result small { color:#aaa; margin-top:4px; font-size:12px; }
+.catalog-result:focus-visible { outline:2px solid #c8d6b1; outline-offset:-2px; }
